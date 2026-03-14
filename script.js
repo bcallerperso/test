@@ -173,6 +173,7 @@ function speakCurrentText() {
 function renderRound() {
   const round = rounds[app.index];
   app.answered = false;
+  nextButton.textContent = "Suivant";
   roundLabel.textContent = `Mission ${app.index + 1} / ${rounds.length}`;
   questionTitle.textContent = "Choisis la bonne réponse";
   questionText.textContent = round.prompt;
@@ -224,6 +225,7 @@ function handleAnswer(button, isCorrect, explanation) {
 
 function renderEndScreen() {
   optionGrid.innerHTML = "";
+  app.index = rounds.length;
   roundLabel.textContent = "Mission terminée";
   questionTitle.textContent = "🎉 Super travail !";
 
@@ -235,24 +237,36 @@ function renderEndScreen() {
   updateMeta();
 }
 
-function nextRound() {
-  if (app.index >= rounds.length - 1) {
-    app.index = -1;
-    app.score = 0;
-    app.streak = 0;
-    app.badges = new Set();
-    nextButton.textContent = "Suivant";
-    updateBadges();
-    updateMeta();
-  }
+function resetGame() {
+  app.index = 0;
+  app.score = 0;
+  app.streak = 0;
+  app.badges = new Set();
+  app.answered = false;
+  updateBadges();
+  updateMeta();
+}
 
-  app.index += 1;
-  if (app.index < rounds.length) {
+function nextRound() {
+  if (app.index === -1) {
+    app.index = 0;
     renderRound();
     return;
   }
 
-  renderEndScreen();
+  if (app.index >= rounds.length) {
+    resetGame();
+    renderRound();
+    return;
+  }
+
+  app.index += 1;
+  if (app.index === rounds.length) {
+    renderEndScreen();
+    return;
+  }
+
+  renderRound();
 }
 
 nextButton.addEventListener("click", nextRound);
