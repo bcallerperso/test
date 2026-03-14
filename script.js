@@ -15,46 +15,43 @@ const profileState = {
 
 const avatarCatalog = {
   hair: [
-    { id: "wavy", label: "Ondulés", render: "~ ~ ~" },
-    { id: "ponytail", label: "Queue de cheval", render: "~o~" },
-    { id: "short", label: "Courts", render: "^^^" },
-    { id: "curly", label: "Bouclés", render: "@@@@" }
+    { id: "wavy", label: "Ondulés" },
+    { id: "ponytail", label: "Queue de cheval" },
+    { id: "short", label: "Courts" },
+    { id: "curly", label: "Bouclés" },
+    { id: "buns", label: "Chignons" }
   ],
   eyes: [
-    { id: "classic", label: "Ronds", render: "o o" },
-    { id: "sparkle", label: "Brillants", render: "* *" },
-    { id: "happy", label: "Souriants", render: "^ ^" },
-    { id: "sleepy", label: "Calmes", render: "- -" }
+    { id: "classic", label: "Ronds" },
+    { id: "sparkle", label: "Brillants" },
+    { id: "happy", label: "Souriants" },
+    { id: "wink", label: "Clin d'oeil" }
   ],
   nose: [
-    { id: "small", label: "Petit", render: "^" },
-    { id: "round", label: "Rond", render: "o" },
-    { id: "button", label: "Bouton", render: "." }
+    { id: "small", label: "Petit" },
+    { id: "round", label: "Rond" },
+    { id: "button", label: "Bouton" }
   ],
   mouth: [
-    { id: "smile", label: "Sourire", render: "u" },
-    { id: "big_smile", label: "Grand sourire", render: "w" },
-    { id: "surprised", label: "Surprise", render: "o" }
+    { id: "smile", label: "Sourire" },
+    { id: "big_smile", label: "Grand sourire" },
+    { id: "heart", label: "Lèvres coeur" },
+    { id: "surprised", label: "Surprise" }
   ],
   outfit: [
-    { id: "purple_shirt", label: "T-shirt violet", render: "T-shirt violet" },
-    { id: "dress", label: "Robe étoilée", render: "Robe étoilée" },
-    { id: "chef", label: "Tablier de chef", render: "Tablier de chef" },
-    { id: "sport", label: "Tenue sport", render: "Tenue sport" }
+    { id: "purple_shirt", label: "T-shirt violet" },
+    { id: "dress", label: "Robe étoilée" },
+    { id: "chef", label: "Tablier de chef" },
+    { id: "sport", label: "Tenue sport" },
+    { id: "hoodie", label: "Sweat à capuche" }
   ]
 };
 
 const profileGreeting = document.getElementById("profile-greeting");
 const childNameInput = document.getElementById("child-name-input");
 const saveProfileButton = document.getElementById("save-profile-button");
-
-const avatarRenders = {
-  hair: document.getElementById("avatar-hair-render"),
-  eyes: document.getElementById("avatar-eyes-render"),
-  nose: document.getElementById("avatar-nose-render"),
-  mouth: document.getElementById("avatar-mouth-render"),
-  outfit: document.getElementById("avatar-outfit-render")
-};
+const avatarCharacter = document.getElementById("avatar-character");
+const avatarStyleLabel = document.getElementById("avatar-style-label");
 
 const avatarOptionContainers = {
   hair: document.getElementById("hair-options"),
@@ -77,6 +74,7 @@ tabButtons.forEach((button) => {
 function loadProfile() {
   const storedRaw = localStorage.getItem(PROFILE_STORAGE_KEY);
   if (!storedRaw) {
+    sanitizeProfileValues();
     return;
   }
 
@@ -91,6 +89,7 @@ function loadProfile() {
   } catch {
     localStorage.removeItem(PROFILE_STORAGE_KEY);
   }
+  sanitizeProfileValues();
 }
 
 function saveProfile() {
@@ -101,14 +100,34 @@ function optionById(part, id) {
   return avatarCatalog[part].find((item) => item.id === id);
 }
 
+function sanitizeProfileValues() {
+  if (!optionById("hair", profileState.hair)) {
+    profileState.hair = "wavy";
+  }
+  if (!optionById("eyes", profileState.eyes)) {
+    profileState.eyes = "classic";
+  }
+  if (!optionById("nose", profileState.nose)) {
+    profileState.nose = "small";
+  }
+  if (!optionById("mouth", profileState.mouth)) {
+    profileState.mouth = "smile";
+  }
+  if (!optionById("outfit", profileState.outfit)) {
+    profileState.outfit = "purple_shirt";
+  }
+}
+
 function updateProfileView() {
   childNameInput.value = profileState.name;
   profileGreeting.textContent = `Hello ${profileState.name}! Let's learn English.`;
-  avatarRenders.hair.textContent = optionById("hair", profileState.hair).render;
-  avatarRenders.eyes.textContent = optionById("eyes", profileState.eyes).render;
-  avatarRenders.nose.textContent = optionById("nose", profileState.nose).render;
-  avatarRenders.mouth.textContent = optionById("mouth", profileState.mouth).render;
-  avatarRenders.outfit.textContent = optionById("outfit", profileState.outfit).render;
+  avatarCharacter.className = `avatar-character hair-${profileState.hair} eyes-${profileState.eyes} nose-${profileState.nose} mouth-${profileState.mouth} outfit-${profileState.outfit}`;
+
+  const hairLabel = optionById("hair", profileState.hair).label;
+  const eyesLabel = optionById("eyes", profileState.eyes).label;
+  const mouthLabel = optionById("mouth", profileState.mouth).label;
+  const outfitLabel = optionById("outfit", profileState.outfit).label;
+  avatarStyleLabel.textContent = `Style: ${hairLabel}, yeux ${eyesLabel.toLowerCase()}, ${mouthLabel.toLowerCase()}, ${outfitLabel.toLowerCase()}`;
 
   Object.keys(avatarOptionContainers).forEach((part) => {
     const buttons = avatarOptionContainers[part].querySelectorAll(".chip-button");
