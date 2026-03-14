@@ -713,6 +713,14 @@ h3 {
   margin-top: 8px;
 }
 
+.review-header {
+  margin-top: 12px;
+}
+
+.review-header h3 {
+  margin-bottom: 4px;
+}
+
 .word-card {
   border: 2px dashed #d9c8ff;
   border-radius: 16px;
@@ -728,15 +736,29 @@ h3 {
   background: #edfbf1;
 }
 
+.word-card.review-due {
+  border-style: solid;
+  border-color: #ffc27d;
+  background: #fff8ee;
+}
+
 .word-top {
   display: flex;
   align-items: center;
   gap: 8px;
   font-weight: 800;
+  justify-content: space-between;
 }
 
 .word-en {
   font-size: 1.15rem;
+}
+
+.memory-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .tiny-button {

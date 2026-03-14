@@ -1,5 +1,5 @@
 const PROFILE_STORAGE_KEY = "elsaEnglishProfileV1";
-const DAILY_STORAGE_KEY = "elsaDailyWordsV1";
+const DAILY_STORAGE_KEY = "elsaDailyWordsSrsV2";
 
 const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
 const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
@@ -636,13 +636,47 @@ const vocabSeries = {
 
 const dailyState = {
   activeSeries: "animals",
-  learned: {}
+  srs: {
+    progress: {},
+    assignments: {}
+  }
 };
 
 const dailyWordsGrid = document.getElementById("daily-words-grid");
 const dailyProgress = document.getElementById("daily-progress");
 const dailyDate = document.getElementById("daily-date");
+const dailyNewCounter = document.getElementById("daily-new-counter");
+const dailyReviewCounter = document.getElementById("daily-review-counter");
+const dailyReviewGrid = document.getElementById("daily-review-grid");
+const dailyReviewSummary = document.getElementById("daily-review-summary");
 const seriesButtons = Array.from(document.querySelectorAll(".series-button"));
+const dailyQuizPrompt = document.getElementById("daily-quiz-prompt");
+const dailyQuizOptions = document.getElementById("daily-quiz-options");
+const dailyQuizFeedback = document.getElementById("daily-quiz-feedback");
+const dailyQuizNext = document.getElementById("daily-quiz-next");
+
+const reviewOffsetsByStage = {
+  1: 1,
+  2: 3,
+  3: 7,
+  4: 14
+};
+
+const stageLabels = {
+  0: "Nouveau",
+  1: "J+1",
+  2: "J+3",
+  3: "J+7",
+  4: "Champion"
+};
+
+const dailyQuizState = {
+  pool: [],
+  index: -1,
+  score: 0,
+  answered: false,
+  currentWord: null
+};
 
 function getTodayKey() {
   const now = new Date();
@@ -656,81 +690,219 @@ function getDaySeed() {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function pickDailyWords(seriesName) {
-  const words = vocabSeries[seriesName];
-  const seed = getDaySeed() + (seriesName === "animals" ? 3 : 11);
-  const picks = new Set();
-  let cursor = 0;
-  while (picks.size < 3) {
-    picks.add(words[(seed + cursor * 2) % words.length].id);
-    cursor += 1;
+function addDays(dayKey, amount) {
+  const source = new Date(`${dayKey}T00:00:00`);
+  source.setDate(source.getDate() + amount);
+  return source.toISOString().slice(0, 10);
+}
+
+function getProgressForWord(wordId) {
+  if (!dailyState.srs.progress[wordId]) {
+    dailyState.srs.progress[wordId] = {
+      stage: 0,
+      nextReview: null,
+      lastSeen: null,
+      attempts: 0,
+      correct: 0
+    };
   }
-  return words.filter((item) => picks.has(item.id));
+  return dailyState.srs.progress[wordId];
+}
+
+function migrateLegacyDailyProgress(raw) {
+  const migrated = {
+    progress: {},
+    assignments: {}
+  };
+
+  if (!raw || typeof raw !== "object" || !raw.learned) {
+    return migrated;
+  }
+
+  const allIds = Object.values(vocabSeries)
+    .flat()
+    .map((word) => word.id);
+
+  Object.keys(raw.learned).forEach((dayKey) => {
+    Object.values(raw.learned[dayKey] || {}).forEach((wordMap) => {
+      Object.keys(wordMap || {}).forEach((wordId) => {
+        if (!allIds.includes(wordId) || !wordMap[wordId]) {
+          return;
+        }
+        migrated.progress[wordId] = {
+          stage: 1,
+          nextReview: addDays(dayKey, 1),
+          lastSeen: dayKey,
+          attempts: 1,
+          correct: 1
+        };
+      });
+    });
+  });
+
+  return migrated;
 }
 
 function loadDailyProgress() {
   const raw = localStorage.getItem(DAILY_STORAGE_KEY);
   if (!raw) {
-    dailyState.learned = {};
+    dailyState.srs = { progress: {}, assignments: {} };
     return;
   }
 
   try {
-    dailyState.learned = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.progress && parsed.assignments) {
+      dailyState.srs = parsed;
+      return;
+    }
+    dailyState.srs = migrateLegacyDailyProgress(parsed);
   } catch {
-    dailyState.learned = {};
+    dailyState.srs = { progress: {}, assignments: {} };
     localStorage.removeItem(DAILY_STORAGE_KEY);
   }
 }
 
 function saveDailyProgress() {
-  localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.learned));
+  localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.srs));
 }
 
-function ensureDailyKey(dayKey, seriesName) {
-  if (!dailyState.learned[dayKey]) {
-    dailyState.learned[dayKey] = {};
+function ensureDailyAssignmentKey(dayKey, seriesName) {
+  if (!dailyState.srs.assignments[dayKey]) {
+    dailyState.srs.assignments[dayKey] = {};
   }
-  if (!dailyState.learned[dayKey][seriesName]) {
-    dailyState.learned[dayKey][seriesName] = {};
+  if (!dailyState.srs.assignments[dayKey][seriesName]) {
+    dailyState.srs.assignments[dayKey][seriesName] = [];
   }
 }
 
-function renderDailyWords() {
-  const dayKey = getTodayKey();
-  ensureDailyKey(dayKey, dailyState.activeSeries);
-  const words = pickDailyWords(dailyState.activeSeries);
-  dailyDate.textContent = `Date: ${dayKey} • Série: ${dailyState.activeSeries === "animals" ? "Animaux" : "Habits"}`;
+function pickDeterministicSubset(list, count, seed) {
+  if (list.length <= count) {
+    return [...list];
+  }
+  const start = seed % list.length;
+  const picked = [];
+  for (let index = 0; index < count; index += 1) {
+    picked.push(list[(start + index) % list.length]);
+  }
+  return picked;
+}
+
+function getOrCreateDailyAssignment(seriesName, dayKey) {
+  ensureDailyAssignmentKey(dayKey, seriesName);
+  const existingIds = dailyState.srs.assignments[dayKey][seriesName];
+  if (existingIds.length === 3) {
+    return vocabSeries[seriesName].filter((word) => existingIds.includes(word.id));
+  }
+
+  const words = [...vocabSeries[seriesName]];
+  const unseen = words.filter((word) => getProgressForWord(word.id).stage === 0);
+  const seed = getDaySeed() + (seriesName === "animals" ? 17 : 31);
+  const selected = [];
+
+  if (unseen.length >= 3) {
+    selected.push(...pickDeterministicSubset(unseen, 3, seed));
+  } else {
+    selected.push(...unseen);
+    const remaining = words
+      .filter((word) => !selected.some((item) => item.id === word.id))
+      .sort((left, right) => {
+        const leftSeen = getProgressForWord(left.id).lastSeen || "1900-01-01";
+        const rightSeen = getProgressForWord(right.id).lastSeen || "1900-01-01";
+        return leftSeen.localeCompare(rightSeen);
+      });
+    selected.push(...pickDeterministicSubset(remaining, 3 - selected.length, seed));
+  }
+
+  dailyState.srs.assignments[dayKey][seriesName] = selected.map((word) => word.id);
+  saveDailyProgress();
+  return selected;
+}
+
+function getDueReviewWords(seriesName, todayKey) {
+  return vocabSeries[seriesName].filter((word) => {
+    const progress = getProgressForWord(word.id);
+    return progress.stage >= 1 && progress.nextReview && progress.nextReview <= todayKey;
+  });
+}
+
+function learnWord(wordId) {
+  const todayKey = getTodayKey();
+  const progress = getProgressForWord(wordId);
+  progress.stage = Math.max(1, progress.stage);
+  progress.nextReview = addDays(todayKey, reviewOffsetsByStage[1]);
+  progress.lastSeen = todayKey;
+  progress.attempts += 1;
+  progress.correct += 1;
+  saveDailyProgress();
+}
+
+function applyReviewResult(wordId, isCorrect) {
+  const todayKey = getTodayKey();
+  const progress = getProgressForWord(wordId);
+  const currentStage = progress.stage;
+  progress.attempts += 1;
+
+  if (isCorrect) {
+    progress.correct += 1;
+    progress.stage = currentStage === 0 ? 1 : Math.min(4, currentStage + 1);
+    progress.nextReview = addDays(todayKey, reviewOffsetsByStage[progress.stage]);
+  } else if (currentStage === 0) {
+    progress.stage = 0;
+    progress.nextReview = null;
+  } else {
+    progress.stage = Math.max(1, currentStage - 1);
+    progress.nextReview = addDays(todayKey, 1);
+  }
+
+  progress.lastSeen = todayKey;
+  saveDailyProgress();
+}
+
+function renderNewWordCards(assignedWords, dayKey) {
   dailyWordsGrid.innerHTML = "";
+  let learnedTodayCount = 0;
 
-  let doneCount = 0;
-  words.forEach((word) => {
-    const card = document.createElement("article");
-    const isDone = Boolean(dailyState.learned[dayKey][dailyState.activeSeries][word.id]);
-    if (isDone) {
-      doneCount += 1;
+  assignedWords.forEach((word) => {
+    const progress = getProgressForWord(word.id);
+    const learnedToday = progress.lastSeen === dayKey && progress.stage >= 1;
+    if (learnedToday) {
+      learnedTodayCount += 1;
     }
 
-    card.className = `word-card ${isDone ? "done" : ""}`;
+    const card = document.createElement("article");
+    card.className = `word-card ${progress.stage >= 1 ? "done" : ""}`;
+
     const top = document.createElement("div");
     top.className = "word-top";
-    top.textContent = `${word.fr}`;
+    const label = document.createElement("span");
+    label.textContent = word.fr;
+    const stageBadge = document.createElement("span");
+    stageBadge.className = "badge";
+    stageBadge.textContent = stageLabels[progress.stage];
+    top.appendChild(label);
+    top.appendChild(stageBadge);
     card.appendChild(top);
 
     const english = document.createElement("p");
     english.className = "word-en";
-    english.textContent = isDone ? `${word.en}` : "Tap pour révéler le mot anglais";
+    english.textContent = progress.stage >= 1 ? word.en : "Tap pour révéler le mot anglais";
     card.appendChild(english);
 
     const sentence = document.createElement("p");
     sentence.className = "subtitle small";
-    sentence.textContent = isDone ? word.sentence : "Phrase modèle cachée";
+    sentence.textContent = progress.stage >= 1 ? word.sentence : "Phrase modèle cachée";
     card.appendChild(sentence);
+
+    const meta = document.createElement("p");
+    meta.className = "memory-meta";
+    meta.textContent = progress.nextReview ? `Prochaine révision: ${progress.nextReview}` : "Pas encore planifié";
+    card.appendChild(meta);
 
     const reveal = document.createElement("button");
     reveal.type = "button";
     reveal.className = "tiny-button";
-    reveal.textContent = isDone ? "Déjà appris" : "Révéler";
+    reveal.textContent = "Révéler";
     reveal.addEventListener("click", () => {
       english.textContent = word.en;
       sentence.textContent = word.sentence;
@@ -740,10 +912,10 @@ function renderDailyWords() {
     const learned = document.createElement("button");
     learned.type = "button";
     learned.className = "tiny-button";
-    learned.textContent = isDone ? "✅ Appris" : "Je l'ai appris";
+    learned.textContent = progress.stage >= 1 ? "✅ Déjà appris" : "Je l'ai appris";
+    learned.disabled = progress.stage >= 1;
     learned.addEventListener("click", () => {
-      dailyState.learned[dayKey][dailyState.activeSeries][word.id] = true;
-      saveDailyProgress();
+      learnWord(word.id);
       renderDailyWords();
     });
     card.appendChild(learned);
@@ -751,7 +923,177 @@ function renderDailyWords() {
     dailyWordsGrid.appendChild(card);
   });
 
-  dailyProgress.textContent = `${profileState.name} a appris ${doneCount}/3 mots aujourd'hui.`;
+  dailyNewCounter.textContent = `Nouveaux: ${learnedTodayCount}/3`;
+}
+
+function renderDueReviewCards(dueWords) {
+  dailyReviewGrid.innerHTML = "";
+
+  if (dueWords.length === 0) {
+    dailyReviewSummary.textContent = "Aucune révision due aujourd'hui. Continue comme ça !";
+    dailyReviewCounter.textContent = "Révisions: 0";
+    return;
+  }
+
+  dailyReviewSummary.textContent = `${dueWords.length} mot(s) à réviser maintenant.`;
+  dailyReviewCounter.textContent = `Révisions: ${dueWords.length}`;
+
+  dueWords.forEach((word) => {
+    const progress = getProgressForWord(word.id);
+    const card = document.createElement("article");
+    card.className = "word-card review-due";
+
+    const top = document.createElement("div");
+    top.className = "word-top";
+    const label = document.createElement("span");
+    label.textContent = `${word.fr} → ${word.en}`;
+    const stageBadge = document.createElement("span");
+    stageBadge.className = "badge";
+    stageBadge.textContent = stageLabels[progress.stage];
+    top.appendChild(label);
+    top.appendChild(stageBadge);
+    card.appendChild(top);
+
+    const sentence = document.createElement("p");
+    sentence.className = "subtitle small";
+    sentence.textContent = word.sentence;
+    card.appendChild(sentence);
+
+    const meta = document.createElement("p");
+    meta.className = "memory-meta";
+    meta.textContent = `Due: ${progress.nextReview} • Score: ${progress.correct}/${Math.max(progress.attempts, 1)}`;
+    card.appendChild(meta);
+
+    dailyReviewGrid.appendChild(card);
+  });
+}
+
+function getDailyQuizPool() {
+  const dayKey = getTodayKey();
+  const assignedWords = getOrCreateDailyAssignment(dailyState.activeSeries, dayKey);
+  const dueWords = getDueReviewWords(dailyState.activeSeries, dayKey);
+  const uniqueWords = [...assignedWords, ...dueWords].filter(
+    (word, index, array) => index === array.findIndex((item) => item.id === word.id)
+  );
+  return uniqueWords;
+}
+
+function setDailyQuizFeedback(text, type) {
+  dailyQuizFeedback.textContent = text;
+  dailyQuizFeedback.className = `feedback ${type}`;
+}
+
+function renderDailyQuizRound() {
+  const word = dailyQuizState.pool[dailyQuizState.index];
+  dailyQuizState.currentWord = word;
+  dailyQuizState.answered = false;
+  setDailyQuizFeedback("", "");
+  dailyQuizNext.disabled = true;
+  dailyQuizNext.textContent = "Question suivante";
+  dailyQuizPrompt.textContent = `${dailyQuizState.index + 1}/${dailyQuizState.pool.length} - Comment dit-on "${word.fr}" en anglais ?`;
+  dailyQuizOptions.innerHTML = "";
+
+  const allSeriesWords = vocabSeries[dailyState.activeSeries];
+  const distractors = allSeriesWords
+    .filter((item) => item.id !== word.id)
+    .slice(0, 6)
+    .sort((left, right) => left.en.localeCompare(right.en))
+    .slice(0, 3)
+    .map((item) => item.en);
+
+  const options = [word.en, ...distractors].sort((left, right) => left.localeCompare(right));
+  options.forEach((choice) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option-button";
+    button.textContent = choice;
+    button.addEventListener("click", () => {
+      if (dailyQuizState.answered) {
+        return;
+      }
+      dailyQuizState.answered = true;
+      const correct = choice === word.en;
+      Array.from(dailyQuizOptions.querySelectorAll(".option-button")).forEach((item) => {
+        item.disabled = true;
+        if (item.textContent === word.en) {
+          item.classList.add("good");
+        }
+      });
+
+      if (!correct) {
+        button.classList.add("bad");
+        setDailyQuizFeedback(`Presque ! Réponse: ${word.en}`, "error");
+      } else {
+        dailyQuizState.score += 1;
+        setDailyQuizFeedback("Bravo ! Révision validée.", "ok");
+      }
+      applyReviewResult(word.id, correct);
+      dailyQuizNext.disabled = false;
+      renderDailyWords();
+    });
+    dailyQuizOptions.appendChild(button);
+  });
+}
+
+function nextDailyQuizRound() {
+  if (dailyQuizState.index < 0) {
+    dailyQuizState.pool = getDailyQuizPool();
+    dailyQuizState.score = 0;
+    dailyQuizState.index = 0;
+    if (dailyQuizState.pool.length === 0) {
+      dailyQuizPrompt.textContent = "Aucun mot disponible. Commence par apprendre tes 3 mots du jour.";
+      dailyQuizOptions.innerHTML = "";
+      setDailyQuizFeedback("", "");
+      dailyQuizNext.textContent = "Démarrer challenge";
+      dailyQuizNext.disabled = false;
+      dailyQuizState.index = -1;
+      return;
+    }
+    renderDailyQuizRound();
+    return;
+  }
+
+  dailyQuizState.index += 1;
+  if (dailyQuizState.index >= dailyQuizState.pool.length) {
+    dailyQuizPrompt.textContent = `Challenge terminé: ${dailyQuizState.score}/${dailyQuizState.pool.length}`;
+    dailyQuizOptions.innerHTML = "";
+    setDailyQuizFeedback("Top ! Continue demain pour consolider la mémoire.", "ok");
+    dailyQuizNext.textContent = "Relancer challenge";
+    dailyQuizNext.disabled = false;
+    dailyQuizState.index = -1;
+    dailyQuizState.pool = [];
+    dailyQuizState.currentWord = null;
+    renderDailyWords();
+    return;
+  }
+
+  renderDailyQuizRound();
+}
+
+function resetDailyQuiz() {
+  dailyQuizState.pool = [];
+  dailyQuizState.index = -1;
+  dailyQuizState.score = 0;
+  dailyQuizState.answered = false;
+  dailyQuizState.currentWord = null;
+  dailyQuizPrompt.textContent = "Appuie sur \"Démarrer challenge\".";
+  dailyQuizOptions.innerHTML = "";
+  setDailyQuizFeedback("", "");
+  dailyQuizNext.textContent = "Démarrer challenge";
+  dailyQuizNext.disabled = false;
+}
+
+function renderDailyWords() {
+  const dayKey = getTodayKey();
+  const assignedWords = getOrCreateDailyAssignment(dailyState.activeSeries, dayKey);
+  const dueWords = getDueReviewWords(dailyState.activeSeries, dayKey);
+  dailyDate.textContent = `Date: ${dayKey} • Série: ${dailyState.activeSeries === "animals" ? "Animaux" : "Habits"}`;
+  renderNewWordCards(assignedWords, dayKey);
+  renderDueReviewCards(dueWords);
+
+  const learnedCount = assignedWords.filter((word) => getProgressForWord(word.id).stage >= 1).length;
+  const dueCount = dueWords.length;
+  dailyProgress.textContent = `${profileState.name} a appris ${learnedCount}/3 mots aujourd'hui. Révisions dues: ${dueCount}.`;
 }
 
 seriesButtons.forEach((button) => {
@@ -760,8 +1102,11 @@ seriesButtons.forEach((button) => {
     button.classList.add("active");
     dailyState.activeSeries = button.dataset.series;
     renderDailyWords();
+    resetDailyQuiz();
   });
 });
+
+dailyQuizNext.addEventListener("click", nextDailyQuizRound);
 
 const recipes = {
   pancakes: {
@@ -972,6 +1317,7 @@ loadProfile();
 updateProfileView();
 loadDailyProgress();
 renderDailyWords();
+resetDailyQuiz();
 updateBadges();
 updateMissionMeta();
 updateCookingProgress();

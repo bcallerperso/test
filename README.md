@@ -23,4 +23,6 @@ Option iPad:
   - Sprint `Do/Does`
   - Phrase Builder
 - `3 mots du jour` (séries: animaux et habits)
+  - révisions intelligentes (`J+1`, `J+3`, `J+7`, puis consolidation)
+  - challenge mémoire quotidien
 - Mini-jeu `Cooking English Quest` (pancakes et fruit salad)

@@ -131,14 +131,31 @@
     <section id="tab-daily" class="tab-panel">
       <article class="card" aria-live="polite">
         <h2>3 mots du jour</h2>
-        <p class="subtitle small">Objectif: apprendre 3 nouveaux mots chaque jour.</p>
+        <p class="subtitle small">Objectif: apprendre 3 nouveaux mots chaque jour + révisions intelligentes.</p>
         <div class="inline-wrap">
           <button class="series-button active" data-series="animals" type="button">🐾 Animaux</button>
           <button class="series-button" data-series="clothes" type="button">👕 Habits</button>
         </div>
         <p id="daily-date" class="round-label"></p>
+        <div class="inline-wrap">
+          <span id="daily-new-counter" class="badge">Nouveaux: 0/3</span>
+          <span id="daily-review-counter" class="badge">Révisions: 0</span>
+        </div>
         <div id="daily-words-grid" class="daily-grid"></div>
+        <div class="review-header">
+          <h3>Révisions du jour</h3>
+          <p id="daily-review-summary" class="subtitle small">Aucune révision due pour le moment.</p>
+        </div>
+        <div id="daily-review-grid" class="daily-grid"></div>
         <p id="daily-progress" class="feedback ok"></p>
+      </article>
+
+      <article class="card" aria-live="polite">
+        <h3>Challenge mémoire</h3>
+        <p id="daily-quiz-prompt">Appuie sur "Démarrer challenge".</p>
+        <div id="daily-quiz-options" class="option-grid"></div>
+        <p id="daily-quiz-feedback" class="feedback"></p>
+        <button id="daily-quiz-next" class="next-button" type="button">Démarrer challenge</button>
       </article>
     </section>
 
