@@ -1,6 +1,6 @@
-# English Present Adventure (iPad)
+# Elsa's English Club (iPad)
 
-Mini-jeu interactif pour apprendre le présent en anglais (niveau enfant, environ 10 ans).
+Mini-jeu interactif pour apprendre le présent en anglais (niveau enfant, environ 10 ans), avec profil personnalisé.
 
 ## Démarrer
 
@@ -15,10 +15,12 @@ Option iPad:
 2. Trouver l'IP locale de l'ordinateur.
 3. Ouvrir `http://VOTRE_IP:8080` sur l'iPad.
 
-## Contenu pédagogique
+## Modules inclus
 
-- `I like / I don't like`
-- `He/She likes`
-- Questions avec `Do/Does`
-- Questions courtes de récit (`Who / When / Where`)
-- Forme `Can you ...?`
+- Profil enfant (prénom + avatar personnalisable: cheveux, yeux, nez, bouche, tenue)
+- Verbes au présent:
+  - Aventure quiz (`I like`, `She likes`, `Do/Does`, `Can you`)
+  - Sprint `Do/Does`
+  - Phrase Builder
+- `3 mots du jour` (séries: animaux et habits)
+- Mini-jeu `Cooking English Quest` (pancakes et fruit salad)

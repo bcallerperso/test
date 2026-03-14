@@ -1,6 +1,5 @@
 :root {
   color-scheme: light;
-  --bg: #fff8fd;
   --card: #ffffff;
   --ink: #2e2a4a;
   --muted: #6e6a8a;
@@ -33,7 +32,7 @@ body {
 }
 
 .app-shell {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
   display: grid;
   gap: 14px;
@@ -64,6 +63,41 @@ h1 {
   color: var(--muted);
 }
 
+.subtitle.small {
+  font-size: 0.98rem;
+}
+
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #f3eefc;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.tab-panel {
+  display: none;
+  gap: 12px;
+}
+
+.tab-panel.active {
+  display: grid;
+}
+
 .meta-row {
   display: flex;
   gap: 10px;
@@ -79,6 +113,27 @@ h1 {
   color: var(--ink);
   font-size: 1rem;
   font-weight: 700;
+}
+
+.inline-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.inline-button {
+  width: auto;
+  min-width: 140px;
+}
+
+.text-input {
+  flex: 1 1 180px;
+  border-radius: 12px;
+  border: 2px solid #e5def8;
+  min-height: 48px;
+  padding: 10px 12px;
+  font-size: 1rem;
 }
 
 .action-pill {
@@ -111,6 +166,11 @@ h2 {
   font-size: clamp(1.35rem, 2.4vw, 1.8rem);
 }
 
+#question-title,
+h3 {
+  margin: 12px 0 8px;
+}
+
 #question-text {
   margin: 0 0 14px;
   font-size: 1.1rem;
@@ -138,6 +198,11 @@ h2 {
   background: #f7f3ff;
   color: var(--ink);
   cursor: pointer;
+}
+
+.option-button.compact {
+  width: 140px;
+  text-align: center;
 }
 
 .option-button:hover {
@@ -206,6 +271,143 @@ h2 {
   color: var(--muted);
 }
 
+.avatar-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 290px) 1fr;
+  gap: 14px;
+}
+
+.avatar-preview {
+  border: 2px solid #ece4ff;
+  border-radius: 18px;
+  background: #f8f3ff;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.avatar-face {
+  width: 145px;
+  min-height: 130px;
+  border-radius: 999px;
+  background: #ffe9c9;
+  border: 2px solid #edcca0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px;
+}
+
+.avatar-part {
+  font-weight: 800;
+}
+
+.avatar-part.hair {
+  font-size: 1.15rem;
+  color: #7d4b2c;
+}
+
+.avatar-part.eyes {
+  font-size: 1.2rem;
+}
+
+.avatar-part.nose {
+  font-size: 1rem;
+}
+
+.avatar-part.mouth {
+  font-size: 1.2rem;
+  color: #ad2f5a;
+}
+
+.avatar-part.outfit {
+  width: 100%;
+  text-align: center;
+  border-radius: 12px;
+  padding: 10px;
+  background: #ece0ff;
+}
+
+.avatar-customizer {
+  display: grid;
+  gap: 10px;
+}
+
+.customize-title {
+  margin: 4px 0 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-button,
+.series-button,
+.recipe-button {
+  border: 2px solid #e7ddfb;
+  border-radius: 999px;
+  background: #f9f5ff;
+  color: var(--ink);
+  font-weight: 700;
+  min-height: 44px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.chip-button.active,
+.series-button.active,
+.recipe-button.active {
+  background: #e6d7ff;
+  border-color: #b89cff;
+}
+
+.daily-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.word-card {
+  border: 2px dashed #d9c8ff;
+  border-radius: 16px;
+  background: #fbf8ff;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.word-card.done {
+  border-style: solid;
+  border-color: #89cf9f;
+  background: #edfbf1;
+}
+
+.word-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.word-en {
+  font-size: 1.15rem;
+}
+
+.tiny-button {
+  border: 0;
+  border-radius: 10px;
+  background: #ede4ff;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @media (max-width: 700px) {
   body {
     padding: 12px;
@@ -221,5 +423,13 @@ h2 {
   .next-button {
     font-size: 1rem;
     min-height: 58px;
+  }
+
+  .option-button.compact {
+    width: 100%;
+  }
+
+  .avatar-layout {
+    grid-template-columns: 1fr;
   }
 }

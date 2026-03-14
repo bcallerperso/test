@@ -1,6 +1,161 @@
-const rounds = [
+const PROFILE_STORAGE_KEY = "elsaEnglishProfileV1";
+const DAILY_STORAGE_KEY = "elsaDailyWordsV1";
+
+const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
+const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
+
+const profileState = {
+  name: "Elsa",
+  hair: "wavy",
+  eyes: "classic",
+  nose: "small",
+  mouth: "smile",
+  outfit: "purple_shirt"
+};
+
+const avatarCatalog = {
+  hair: [
+    { id: "wavy", label: "Ondulés", render: "~ ~ ~" },
+    { id: "ponytail", label: "Queue de cheval", render: "~o~" },
+    { id: "short", label: "Courts", render: "^^^" },
+    { id: "curly", label: "Bouclés", render: "@@@@" }
+  ],
+  eyes: [
+    { id: "classic", label: "Ronds", render: "o o" },
+    { id: "sparkle", label: "Brillants", render: "* *" },
+    { id: "happy", label: "Souriants", render: "^ ^" },
+    { id: "sleepy", label: "Calmes", render: "- -" }
+  ],
+  nose: [
+    { id: "small", label: "Petit", render: "^" },
+    { id: "round", label: "Rond", render: "o" },
+    { id: "button", label: "Bouton", render: "." }
+  ],
+  mouth: [
+    { id: "smile", label: "Sourire", render: "u" },
+    { id: "big_smile", label: "Grand sourire", render: "w" },
+    { id: "surprised", label: "Surprise", render: "o" }
+  ],
+  outfit: [
+    { id: "purple_shirt", label: "T-shirt violet", render: "T-shirt violet" },
+    { id: "dress", label: "Robe étoilée", render: "Robe étoilée" },
+    { id: "chef", label: "Tablier de chef", render: "Tablier de chef" },
+    { id: "sport", label: "Tenue sport", render: "Tenue sport" }
+  ]
+};
+
+const profileGreeting = document.getElementById("profile-greeting");
+const childNameInput = document.getElementById("child-name-input");
+const saveProfileButton = document.getElementById("save-profile-button");
+
+const avatarRenders = {
+  hair: document.getElementById("avatar-hair-render"),
+  eyes: document.getElementById("avatar-eyes-render"),
+  nose: document.getElementById("avatar-nose-render"),
+  mouth: document.getElementById("avatar-mouth-render"),
+  outfit: document.getElementById("avatar-outfit-render")
+};
+
+const avatarOptionContainers = {
+  hair: document.getElementById("hair-options"),
+  eyes: document.getElementById("eyes-options"),
+  nose: document.getElementById("nose-options"),
+  mouth: document.getElementById("mouth-options"),
+  outfit: document.getElementById("outfit-options")
+};
+
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const targetId = button.dataset.tabTarget;
+    tabButtons.forEach((item) => item.classList.remove("active"));
+    tabPanels.forEach((panel) => panel.classList.remove("active"));
+    button.classList.add("active");
+    document.getElementById(targetId)?.classList.add("active");
+  });
+});
+
+function loadProfile() {
+  const storedRaw = localStorage.getItem(PROFILE_STORAGE_KEY);
+  if (!storedRaw) {
+    return;
+  }
+
+  try {
+    const stored = JSON.parse(storedRaw);
+    profileState.name = stored.name || "Elsa";
+    profileState.hair = stored.hair || profileState.hair;
+    profileState.eyes = stored.eyes || profileState.eyes;
+    profileState.nose = stored.nose || profileState.nose;
+    profileState.mouth = stored.mouth || profileState.mouth;
+    profileState.outfit = stored.outfit || profileState.outfit;
+  } catch {
+    localStorage.removeItem(PROFILE_STORAGE_KEY);
+  }
+}
+
+function saveProfile() {
+  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileState));
+}
+
+function optionById(part, id) {
+  return avatarCatalog[part].find((item) => item.id === id);
+}
+
+function updateProfileView() {
+  childNameInput.value = profileState.name;
+  profileGreeting.textContent = `Hello ${profileState.name}! Let's learn English.`;
+  avatarRenders.hair.textContent = optionById("hair", profileState.hair).render;
+  avatarRenders.eyes.textContent = optionById("eyes", profileState.eyes).render;
+  avatarRenders.nose.textContent = optionById("nose", profileState.nose).render;
+  avatarRenders.mouth.textContent = optionById("mouth", profileState.mouth).render;
+  avatarRenders.outfit.textContent = optionById("outfit", profileState.outfit).render;
+
+  Object.keys(avatarOptionContainers).forEach((part) => {
+    const buttons = avatarOptionContainers[part].querySelectorAll(".chip-button");
+    buttons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.value === profileState[part]);
+    });
+  });
+}
+
+function renderAvatarOptions() {
+  Object.keys(avatarOptionContainers).forEach((part) => {
+    const container = avatarOptionContainers[part];
+    container.innerHTML = "";
+
+    avatarCatalog[part].forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "chip-button";
+      button.dataset.value = option.id;
+      button.textContent = option.label;
+      button.addEventListener("click", () => {
+        profileState[part] = option.id;
+        updateProfileView();
+        saveProfile();
+      });
+      container.appendChild(button);
+    });
+  });
+}
+
+saveProfileButton.addEventListener("click", () => {
+  const safeName = childNameInput.value.trim() || "Elsa";
+  profileState.name = safeName.slice(0, 20);
+  updateProfileView();
+  saveProfile();
+});
+
+childNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    saveProfileButton.click();
+  }
+});
+
+const missionRounds = [
   {
-    prompt: "🍎 Choose the correct sentence.",
+    prompt: "Choose the correct sentence.",
     choices: [
       { label: "She likes apples.", correct: true },
       { label: "She like apples.", correct: false },
@@ -9,7 +164,7 @@ const rounds = [
     explanation: "Avec she/he, on met -s au verbe: likes."
   },
   {
-    prompt: "🥞 Complete: Mr Wolf ___ pancakes.",
+    prompt: "Complete: Mr Wolf ___ pancakes.",
     choices: [
       { label: "likes", correct: true },
       { label: "like", correct: false },
@@ -18,7 +173,7 @@ const rounds = [
     explanation: "Mr Wolf = he, donc likes."
   },
   {
-    prompt: "🐟 Ask a question: ___ you like fish and chips?",
+    prompt: "Ask a question: ___ you like fish and chips?",
     choices: [
       { label: "Do", correct: true },
       { label: "Does", correct: false },
@@ -27,7 +182,7 @@ const rounds = [
     explanation: "Avec you, on utilise Do."
   },
   {
-    prompt: "🍋 Choose the best answer.",
+    prompt: "Choose the best answer.",
     choices: [
       { label: "I don't like lemons.", correct: true },
       { label: "I doesn't like lemons.", correct: false },
@@ -36,7 +191,7 @@ const rounds = [
     explanation: "Forme négative: I don't like..."
   },
   {
-    prompt: "🧁 Complete: He ___ cake.",
+    prompt: "Complete: He ___ cake.",
     choices: [
       { label: "likes", correct: true },
       { label: "like", correct: false },
@@ -45,7 +200,7 @@ const rounds = [
     explanation: "He + likes."
   },
   {
-    prompt: "🥕 Pick the correct sentence.",
+    prompt: "Pick the correct sentence.",
     choices: [
       { label: "We like vegetables.", correct: true },
       { label: "We likes vegetables.", correct: false },
@@ -54,7 +209,7 @@ const rounds = [
     explanation: "Avec we, le verbe reste like."
   },
   {
-    prompt: "📖 Story time: ___ does the story happen?",
+    prompt: "Story time: ___ does the story happen?",
     choices: [
       { label: "When", correct: true },
       { label: "Where", correct: false },
@@ -63,7 +218,7 @@ const rounds = [
     explanation: "When = quand."
   },
   {
-    prompt: "🌲 Story answer: It happens ___ a wood.",
+    prompt: "Story answer: It happens ___ a wood.",
     choices: [
       { label: "in", correct: true },
       { label: "on", correct: false },
@@ -72,7 +227,7 @@ const rounds = [
     explanation: "On dit in a wood."
   },
   {
-    prompt: "🙋 Choose the right request.",
+    prompt: "Choose the right request.",
     choices: [
       { label: "Can you help me write my shopping list?", correct: true },
       { label: "Can you helps me write my shopping list?", correct: false },
@@ -81,7 +236,7 @@ const rounds = [
     explanation: "Can you + verbe sans -s."
   },
   {
-    prompt: "🍫 Complete: They ___ chocolate biscuits.",
+    prompt: "Complete: They ___ chocolate biscuits.",
     choices: [
       { label: "like", correct: true },
       { label: "likes", correct: false },
@@ -97,7 +252,7 @@ const starsByScore = [
   { limit: 10, text: "🌟🌟🌟 English Hero" }
 ];
 
-const app = {
+const missionState = {
   score: 0,
   streak: 0,
   index: -1,
@@ -117,20 +272,21 @@ const progressBar = document.getElementById("progress-bar");
 const badgesContainer = document.getElementById("badges");
 const speakButton = document.getElementById("speak-button");
 
-function updateMeta() {
-  scoreValue.textContent = String(app.score);
-  streakValue.textContent = String(app.streak);
-  progressBar.style.width = `${((app.index + 1) / rounds.length) * 100}%`;
+function updateMissionMeta() {
+  scoreValue.textContent = String(missionState.score);
+  streakValue.textContent = String(missionState.streak);
+  const width = Math.max(0, ((missionState.index + 1) / missionRounds.length) * 100);
+  progressBar.style.width = `${width}%`;
 }
 
 function updateBadges() {
-  if (app.badges.size === 0) {
+  if (missionState.badges.size === 0) {
     badgesContainer.innerHTML = '<span class="badge empty">Pas encore de trophée</span>';
     return;
   }
 
   badgesContainer.innerHTML = "";
-  app.badges.forEach((badge) => {
+  missionState.badges.forEach((badge) => {
     const chip = document.createElement("span");
     chip.className = "badge";
     chip.textContent = badge;
@@ -139,25 +295,25 @@ function updateBadges() {
 }
 
 function checkForBadgeUnlock() {
-  if (app.streak >= 3) {
-    app.badges.add("🔥 Série de 3");
+  if (missionState.streak >= 3) {
+    missionState.badges.add("🔥 Série de 3");
   }
-  if (app.streak >= 5) {
-    app.badges.add("🚀 Série de 5");
+  if (missionState.streak >= 5) {
+    missionState.badges.add("🚀 Série de 5");
   }
-  if (app.score >= 8) {
-    app.badges.add("🎯 Grammaire pro");
+  if (missionState.score >= 8) {
+    missionState.badges.add("🎯 Grammaire pro");
   }
   updateBadges();
 }
 
-function setFeedback(text, type) {
+function setMissionFeedback(text, type) {
   feedback.textContent = text;
   feedback.className = `feedback ${type}`;
 }
 
 function speakCurrentText() {
-  const round = rounds[app.index];
+  const round = missionRounds[missionState.index];
   if (!window.speechSynthesis || !round) {
     return;
   }
@@ -165,19 +321,19 @@ function speakCurrentText() {
   const message = `${round.prompt} ${round.choices.map((choice) => choice.label).join(". ")}`;
   const utterance = new SpeechSynthesisUtterance(message);
   utterance.lang = "en-GB";
-  utterance.rate = 0.9;
+  utterance.rate = 0.85;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
 
-function renderRound() {
-  const round = rounds[app.index];
-  app.answered = false;
+function renderMissionRound() {
+  const round = missionRounds[missionState.index];
+  missionState.answered = false;
   nextButton.textContent = "Suivant";
-  roundLabel.textContent = `Mission ${app.index + 1} / ${rounds.length}`;
+  roundLabel.textContent = `Mission ${missionState.index + 1} / ${missionRounds.length}`;
   questionTitle.textContent = "Choisis la bonne réponse";
   questionText.textContent = round.prompt;
-  setFeedback("", "");
+  setMissionFeedback("", "");
   nextButton.disabled = true;
   optionGrid.innerHTML = "";
 
@@ -186,23 +342,23 @@ function renderRound() {
     button.className = "option-button";
     button.type = "button";
     button.textContent = choice.label;
-    button.addEventListener("click", () => handleAnswer(button, choice.correct, round.explanation));
+    button.addEventListener("click", () => handleMissionAnswer(button, choice.correct, round.explanation));
     optionGrid.appendChild(button);
   });
 
-  updateMeta();
+  updateMissionMeta();
 }
 
-function handleAnswer(button, isCorrect, explanation) {
-  if (app.answered) {
+function handleMissionAnswer(button, isCorrect, explanation) {
+  if (missionState.answered) {
     return;
   }
 
-  app.answered = true;
+  missionState.answered = true;
   const allButtons = Array.from(optionGrid.querySelectorAll(".option-button"));
   allButtons.forEach((item) => {
     item.disabled = true;
-    const isItemCorrect = rounds[app.index].choices.find((choice) => choice.label === item.textContent)?.correct;
+    const isItemCorrect = missionRounds[missionState.index].choices.find((choice) => choice.label === item.textContent)?.correct;
     if (isItemCorrect) {
       item.classList.add("good");
     }
@@ -210,67 +366,593 @@ function handleAnswer(button, isCorrect, explanation) {
 
   if (!isCorrect) {
     button.classList.add("bad");
-    app.streak = 0;
-    setFeedback(`Presque ! ${explanation}`, "error");
+    missionState.streak = 0;
+    setMissionFeedback(`Presque ! ${explanation}`, "error");
   } else {
-    app.score += 1;
-    app.streak += 1;
-    setFeedback(`Bravo ! ${explanation}`, "ok");
+    missionState.score += 1;
+    missionState.streak += 1;
+    setMissionFeedback(`Bravo ${profileState.name} ! ${explanation}`, "ok");
   }
 
   checkForBadgeUnlock();
-  updateMeta();
+  updateMissionMeta();
   nextButton.disabled = false;
 }
 
-function renderEndScreen() {
+function renderMissionEndScreen() {
   optionGrid.innerHTML = "";
-  app.index = rounds.length;
+  missionState.index = missionRounds.length;
   roundLabel.textContent = "Mission terminée";
-  questionTitle.textContent = "🎉 Super travail !";
+  questionTitle.textContent = `🎉 Super travail ${profileState.name} !`;
 
-  const starLine = starsByScore.find((item) => app.score <= item.limit)?.text ?? "🌟🌟🌟 English Hero";
-  questionText.textContent = `Score final: ${app.score}/${rounds.length} — ${starLine}`;
-  setFeedback("Tu peux rejouer pour battre ton record !", "ok");
+  const starLine = starsByScore.find((item) => missionState.score <= item.limit)?.text ?? "🌟🌟🌟 English Hero";
+  questionText.textContent = `Score final: ${missionState.score}/${missionRounds.length} — ${starLine}`;
+  setMissionFeedback("Tu peux rejouer pour battre ton record !", "ok");
   nextButton.textContent = "Rejouer";
   nextButton.disabled = false;
-  updateMeta();
+  updateMissionMeta();
 }
 
-function resetGame() {
-  app.index = 0;
-  app.score = 0;
-  app.streak = 0;
-  app.badges = new Set();
-  app.answered = false;
+function resetMissionGame() {
+  missionState.index = 0;
+  missionState.score = 0;
+  missionState.streak = 0;
+  missionState.badges = new Set();
+  missionState.answered = false;
   updateBadges();
-  updateMeta();
+  updateMissionMeta();
 }
 
-function nextRound() {
-  if (app.index === -1) {
-    app.index = 0;
-    renderRound();
+function nextMissionRound() {
+  if (missionState.index === -1) {
+    missionState.index = 0;
+    renderMissionRound();
     return;
   }
 
-  if (app.index >= rounds.length) {
-    resetGame();
-    renderRound();
+  if (missionState.index >= missionRounds.length) {
+    resetMissionGame();
+    renderMissionRound();
     return;
   }
 
-  app.index += 1;
-  if (app.index === rounds.length) {
-    renderEndScreen();
+  missionState.index += 1;
+  if (missionState.index === missionRounds.length) {
+    renderMissionEndScreen();
     return;
   }
 
-  renderRound();
+  renderMissionRound();
 }
 
-nextButton.addEventListener("click", nextRound);
+nextButton.addEventListener("click", nextMissionRound);
 speakButton.addEventListener("click", speakCurrentText);
 
+const sprintState = {
+  index: -1,
+  score: 0,
+  currentRound: null
+};
+
+const sprintQuestion = document.getElementById("sprint-question");
+const sprintDo = document.getElementById("sprint-do");
+const sprintDoes = document.getElementById("sprint-does");
+const sprintFeedback = document.getElementById("sprint-feedback");
+const sprintNext = document.getElementById("sprint-next");
+
+const sprintRounds = [
+  { text: "___ you like bananas?", answer: "do" },
+  { text: "___ he play football?", answer: "does" },
+  { text: "___ they like pasta?", answer: "do" },
+  { text: "___ she cook pancakes?", answer: "does" },
+  { text: "___ we have a story today?", answer: "do" }
+];
+
+function startSprint() {
+  sprintState.index = 0;
+  sprintState.score = 0;
+  sprintFeedback.textContent = "";
+  sprintFeedback.className = "feedback";
+  sprintNext.textContent = "Question suivante";
+  loadSprintRound();
+}
+
+function loadSprintRound() {
+  sprintState.currentRound = sprintRounds[sprintState.index];
+  sprintQuestion.textContent = `${sprintState.index + 1}/${sprintRounds.length} - ${sprintState.currentRound.text}`;
+  sprintDo.disabled = false;
+  sprintDoes.disabled = false;
+}
+
+function handleSprintAnswer(value) {
+  if (!sprintState.currentRound) {
+    return;
+  }
+
+  sprintDo.disabled = true;
+  sprintDoes.disabled = true;
+  const ok = sprintState.currentRound.answer === value;
+  if (ok) {
+    sprintState.score += 1;
+    sprintFeedback.textContent = "Bravo!";
+    sprintFeedback.className = "feedback ok";
+  } else {
+    sprintFeedback.textContent = `Presque! Réponse: ${sprintState.currentRound.answer.toUpperCase()}`;
+    sprintFeedback.className = "feedback error";
+  }
+}
+
+function nextSprintRound() {
+  if (sprintState.index < 0) {
+    startSprint();
+    return;
+  }
+
+  sprintState.index += 1;
+  if (sprintState.index >= sprintRounds.length) {
+    sprintQuestion.textContent = `Sprint fini: ${sprintState.score}/${sprintRounds.length}`;
+    sprintFeedback.textContent = "Super! Tu peux relancer le sprint.";
+    sprintFeedback.className = "feedback ok";
+    sprintDo.disabled = true;
+    sprintDoes.disabled = true;
+    sprintState.index = -1;
+    sprintState.currentRound = null;
+    sprintNext.textContent = "Relancer sprint";
+    return;
+  }
+
+  loadSprintRound();
+}
+
+sprintDo.addEventListener("click", () => handleSprintAnswer("do"));
+sprintDoes.addEventListener("click", () => handleSprintAnswer("does"));
+sprintNext.addEventListener("click", nextSprintRound);
+sprintDo.disabled = true;
+sprintDoes.disabled = true;
+
+const builderPrompt = document.getElementById("builder-prompt");
+const builderOptions = document.getElementById("builder-options");
+const builderFeedback = document.getElementById("builder-feedback");
+const builderNext = document.getElementById("builder-next");
+
+const builderState = {
+  index: -1
+};
+
+const builderRounds = [
+  {
+    prompt: "Choisis la phrase correcte pour parler d'elle.",
+    choices: ["She likes oranges.", "She like oranges.", "She don't like oranges."],
+    answer: "She likes oranges."
+  },
+  {
+    prompt: "Choisis la bonne phrase négative.",
+    choices: ["I don't like milk.", "I doesn't like milk.", "I not like milk."],
+    answer: "I don't like milk."
+  },
+  {
+    prompt: "Choisis la bonne question.",
+    choices: ["Do you like fish and chips?", "Does you like fish and chips?", "Are you like fish and chips?"],
+    answer: "Do you like fish and chips?"
+  }
+];
+
+function renderBuilderRound() {
+  const round = builderRounds[builderState.index];
+  builderPrompt.textContent = `${builderState.index + 1}/${builderRounds.length} - ${round.prompt}`;
+  builderOptions.innerHTML = "";
+  builderFeedback.textContent = "";
+  builderFeedback.className = "feedback";
+  builderNext.disabled = true;
+  builderNext.textContent = "Suivant";
+
+  round.choices.forEach((choice) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option-button";
+    button.textContent = choice;
+    button.addEventListener("click", () => {
+      const correct = choice === round.answer;
+      Array.from(builderOptions.querySelectorAll(".option-button")).forEach((item) => {
+        item.disabled = true;
+        if (item.textContent === round.answer) {
+          item.classList.add("good");
+        }
+      });
+      if (!correct) {
+        button.classList.add("bad");
+        builderFeedback.textContent = "Presque, regarde la correction en vert.";
+        builderFeedback.className = "feedback error";
+      } else {
+        builderFeedback.textContent = "Bravo!";
+        builderFeedback.className = "feedback ok";
+      }
+      builderNext.disabled = false;
+    });
+    builderOptions.appendChild(button);
+  });
+}
+
+function nextBuilderRound() {
+  if (builderState.index < 0) {
+    builderState.index = 0;
+    renderBuilderRound();
+    return;
+  }
+
+  builderState.index += 1;
+  if (builderState.index >= builderRounds.length) {
+    builderPrompt.textContent = "Builder terminé! Tu maîtrises de mieux en mieux le présent.";
+    builderOptions.innerHTML = "";
+    builderFeedback.textContent = "Relance quand tu veux.";
+    builderFeedback.className = "feedback ok";
+    builderState.index = -1;
+    builderNext.textContent = "Relancer builder";
+    builderNext.disabled = false;
+    return;
+  }
+  renderBuilderRound();
+}
+
+builderNext.addEventListener("click", nextBuilderRound);
+
+const vocabSeries = {
+  animals: [
+    { id: "fox", fr: "renard", en: "fox", sentence: "The fox runs fast." },
+    { id: "wolf", fr: "loup", en: "wolf", sentence: "The wolf likes pancakes." },
+    { id: "cat", fr: "chat", en: "cat", sentence: "The cat drinks milk." },
+    { id: "dog", fr: "chien", en: "dog", sentence: "The dog eats biscuits." },
+    { id: "rabbit", fr: "lapin", en: "rabbit", sentence: "The rabbit likes carrots." },
+    { id: "bird", fr: "oiseau", en: "bird", sentence: "The bird sings." }
+  ],
+  clothes: [
+    { id: "dress", fr: "robe", en: "dress", sentence: "She wears a dress." },
+    { id: "hat", fr: "chapeau", en: "hat", sentence: "He wears a hat." },
+    { id: "jacket", fr: "veste", en: "jacket", sentence: "I wear a jacket." },
+    { id: "shirt", fr: "t-shirt", en: "shirt", sentence: "We wear shirts." },
+    { id: "shoes", fr: "chaussures", en: "shoes", sentence: "They wear shoes." },
+    { id: "scarf", fr: "écharpe", en: "scarf", sentence: "She wears a scarf." }
+  ]
+};
+
+const dailyState = {
+  activeSeries: "animals",
+  learned: {}
+};
+
+const dailyWordsGrid = document.getElementById("daily-words-grid");
+const dailyProgress = document.getElementById("daily-progress");
+const dailyDate = document.getElementById("daily-date");
+const seriesButtons = Array.from(document.querySelectorAll(".series-button"));
+
+function getTodayKey() {
+  const now = new Date();
+  return now.toISOString().slice(0, 10);
+}
+
+function getDaySeed() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now - start;
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function pickDailyWords(seriesName) {
+  const words = vocabSeries[seriesName];
+  const seed = getDaySeed() + (seriesName === "animals" ? 3 : 11);
+  const picks = new Set();
+  let cursor = 0;
+  while (picks.size < 3) {
+    picks.add(words[(seed + cursor * 2) % words.length].id);
+    cursor += 1;
+  }
+  return words.filter((item) => picks.has(item.id));
+}
+
+function loadDailyProgress() {
+  const raw = localStorage.getItem(DAILY_STORAGE_KEY);
+  if (!raw) {
+    dailyState.learned = {};
+    return;
+  }
+
+  try {
+    dailyState.learned = JSON.parse(raw);
+  } catch {
+    dailyState.learned = {};
+    localStorage.removeItem(DAILY_STORAGE_KEY);
+  }
+}
+
+function saveDailyProgress() {
+  localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.learned));
+}
+
+function ensureDailyKey(dayKey, seriesName) {
+  if (!dailyState.learned[dayKey]) {
+    dailyState.learned[dayKey] = {};
+  }
+  if (!dailyState.learned[dayKey][seriesName]) {
+    dailyState.learned[dayKey][seriesName] = {};
+  }
+}
+
+function renderDailyWords() {
+  const dayKey = getTodayKey();
+  ensureDailyKey(dayKey, dailyState.activeSeries);
+  const words = pickDailyWords(dailyState.activeSeries);
+  dailyDate.textContent = `Date: ${dayKey} • Série: ${dailyState.activeSeries === "animals" ? "Animaux" : "Habits"}`;
+  dailyWordsGrid.innerHTML = "";
+
+  let doneCount = 0;
+  words.forEach((word) => {
+    const card = document.createElement("article");
+    const isDone = Boolean(dailyState.learned[dayKey][dailyState.activeSeries][word.id]);
+    if (isDone) {
+      doneCount += 1;
+    }
+
+    card.className = `word-card ${isDone ? "done" : ""}`;
+    const top = document.createElement("div");
+    top.className = "word-top";
+    top.textContent = `${word.fr}`;
+    card.appendChild(top);
+
+    const english = document.createElement("p");
+    english.className = "word-en";
+    english.textContent = isDone ? `${word.en}` : "Tap pour révéler le mot anglais";
+    card.appendChild(english);
+
+    const sentence = document.createElement("p");
+    sentence.className = "subtitle small";
+    sentence.textContent = isDone ? word.sentence : "Phrase modèle cachée";
+    card.appendChild(sentence);
+
+    const reveal = document.createElement("button");
+    reveal.type = "button";
+    reveal.className = "tiny-button";
+    reveal.textContent = isDone ? "Déjà appris" : "Révéler";
+    reveal.addEventListener("click", () => {
+      english.textContent = word.en;
+      sentence.textContent = word.sentence;
+    });
+    card.appendChild(reveal);
+
+    const learned = document.createElement("button");
+    learned.type = "button";
+    learned.className = "tiny-button";
+    learned.textContent = isDone ? "✅ Appris" : "Je l'ai appris";
+    learned.addEventListener("click", () => {
+      dailyState.learned[dayKey][dailyState.activeSeries][word.id] = true;
+      saveDailyProgress();
+      renderDailyWords();
+    });
+    card.appendChild(learned);
+
+    dailyWordsGrid.appendChild(card);
+  });
+
+  dailyProgress.textContent = `${profileState.name} a appris ${doneCount}/3 mots aujourd'hui.`;
+}
+
+seriesButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    seriesButtons.forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    dailyState.activeSeries = button.dataset.series;
+    renderDailyWords();
+  });
+});
+
+const recipes = {
+  pancakes: {
+    label: "Pancakes",
+    steps: [
+      {
+        prompt: "Step 1: Choose the correct sentence.",
+        choices: ["I wash my hands first.", "I washes my hands first.", "I washing my hands first."],
+        answer: "I wash my hands first.",
+        explain: "I + wash."
+      },
+      {
+        prompt: "Step 2: Complete: She ___ eggs in a bowl.",
+        choices: ["cracks", "crack", "cracking"],
+        answer: "cracks",
+        explain: "She + cracks."
+      },
+      {
+        prompt: "Step 3: Choose the best sentence.",
+        choices: ["We mix milk and flour.", "We mixes milk and flour.", "We doesn't mix milk and flour."],
+        answer: "We mix milk and flour.",
+        explain: "We + mix."
+      },
+      {
+        prompt: "Step 4: Complete: He ___ the pan.",
+        choices: ["heats", "heat", "don't heat"],
+        answer: "heats",
+        explain: "He + heats."
+      },
+      {
+        prompt: "Step 5: Final action.",
+        choices: ["I cook the pancakes.", "I cooks the pancakes.", "I cooking the pancakes."],
+        answer: "I cook the pancakes.",
+        explain: "Great chef sentence!"
+      }
+    ]
+  },
+  fruit_salad: {
+    label: "Fruit Salad",
+    steps: [
+      {
+        prompt: "Step 1: Complete: I ___ the apples.",
+        choices: ["wash", "washes", "washing"],
+        answer: "wash",
+        explain: "I + wash."
+      },
+      {
+        prompt: "Step 2: Choose the correct sentence.",
+        choices: ["She cuts the bananas.", "She cut the bananas.", "She don't cut the bananas."],
+        answer: "She cuts the bananas.",
+        explain: "She + cuts."
+      },
+      {
+        prompt: "Step 3: Complete: They ___ oranges.",
+        choices: ["peel", "peels", "peeling"],
+        answer: "peel",
+        explain: "They + peel."
+      },
+      {
+        prompt: "Step 4: Choose the best sentence.",
+        choices: ["We mix all fruits.", "We mixes all fruits.", "We doesn't mix all fruits."],
+        answer: "We mix all fruits.",
+        explain: "We + mix."
+      },
+      {
+        prompt: "Step 5: Final sentence.",
+        choices: ["I serve the fruit salad.", "I serves the fruit salad.", "I serving the fruit salad."],
+        answer: "I serve the fruit salad.",
+        explain: "Chef completed!"
+      }
+    ]
+  }
+};
+
+const cookingState = {
+  recipe: "pancakes",
+  index: -1,
+  score: 0,
+  answered: false
+};
+
+const recipeButtons = Array.from(document.querySelectorAll(".recipe-button"));
+const cookingProgress = document.getElementById("cooking-progress");
+const cookingStepLabel = document.getElementById("cooking-step-label");
+const cookingPrompt = document.getElementById("cooking-prompt");
+const cookingOptions = document.getElementById("cooking-options");
+const cookingFeedback = document.getElementById("cooking-feedback");
+const cookingNext = document.getElementById("cooking-next");
+
+function setCookingFeedback(text, type) {
+  cookingFeedback.textContent = text;
+  cookingFeedback.className = `feedback ${type}`;
+}
+
+function updateCookingProgress() {
+  const steps = recipes[cookingState.recipe].steps.length;
+  const width = cookingState.index < 0 ? 0 : ((cookingState.index + 1) / steps) * 100;
+  cookingProgress.style.width = `${Math.min(100, width)}%`;
+}
+
+function renderCookingStep() {
+  const recipe = recipes[cookingState.recipe];
+  const step = recipe.steps[cookingState.index];
+  cookingState.answered = false;
+  cookingStepLabel.textContent = `${recipe.label} • Étape ${cookingState.index + 1}/${recipe.steps.length}`;
+  cookingPrompt.textContent = step.prompt;
+  setCookingFeedback("", "");
+  cookingNext.disabled = true;
+  cookingNext.textContent = "Étape suivante";
+  cookingOptions.innerHTML = "";
+
+  step.choices.forEach((choice) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option-button";
+    button.textContent = choice;
+    button.addEventListener("click", () => handleCookingAnswer(button, choice === step.answer, step.answer, step.explain));
+    cookingOptions.appendChild(button);
+  });
+
+  updateCookingProgress();
+}
+
+function handleCookingAnswer(button, isCorrect, answer, explanation) {
+  if (cookingState.answered) {
+    return;
+  }
+
+  cookingState.answered = true;
+  const buttons = Array.from(cookingOptions.querySelectorAll(".option-button"));
+  buttons.forEach((item) => {
+    item.disabled = true;
+    if (item.textContent === answer) {
+      item.classList.add("good");
+    }
+  });
+
+  if (isCorrect) {
+    cookingState.score += 1;
+    setCookingFeedback(`Yummy! ${explanation}`, "ok");
+  } else {
+    button.classList.add("bad");
+    setCookingFeedback(`Presque! Bonne réponse: ${answer}`, "error");
+  }
+  cookingNext.disabled = false;
+}
+
+function renderCookingEnd() {
+  const recipe = recipes[cookingState.recipe];
+  cookingStepLabel.textContent = `${recipe.label} terminé`;
+  cookingPrompt.textContent = `Great job ${profileState.name}! Score cuisine: ${cookingState.score}/${recipe.steps.length}`;
+  cookingOptions.innerHTML = "";
+  setCookingFeedback("Tu viens d'apprendre des verbes au présent en cuisinant.", "ok");
+  cookingNext.textContent = "Rejouer la recette";
+  cookingNext.disabled = false;
+  cookingState.index = recipe.steps.length;
+  updateCookingProgress();
+}
+
+function startCookingRecipe() {
+  cookingState.index = 0;
+  cookingState.score = 0;
+  renderCookingStep();
+}
+
+function nextCookingStep() {
+  if (cookingState.index < 0) {
+    startCookingRecipe();
+    return;
+  }
+
+  const recipe = recipes[cookingState.recipe];
+  if (cookingState.index >= recipe.steps.length) {
+    startCookingRecipe();
+    return;
+  }
+
+  cookingState.index += 1;
+  if (cookingState.index === recipe.steps.length) {
+    renderCookingEnd();
+    return;
+  }
+
+  renderCookingStep();
+}
+
+recipeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    recipeButtons.forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    cookingState.recipe = button.dataset.recipe;
+    cookingState.index = -1;
+    cookingState.score = 0;
+    cookingStepLabel.textContent = "Étape 1";
+    cookingPrompt.textContent = "Appuie sur \"Commencer la recette\".";
+    cookingOptions.innerHTML = "";
+    setCookingFeedback("", "");
+    cookingNext.textContent = "Commencer la recette";
+    cookingNext.disabled = false;
+    updateCookingProgress();
+  });
+});
+
+cookingNext.addEventListener("click", nextCookingStep);
+
+renderAvatarOptions();
+loadProfile();
+updateProfileView();
+loadDailyProgress();
+renderDailyWords();
 updateBadges();
-updateMeta();
+updateMissionMeta();
+updateCookingProgress();
