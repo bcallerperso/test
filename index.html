@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>English Present Adventure</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <p class="eyebrow">Jeu d'anglais • niveau 10 ans</p>
+      <h1>English Present Adventure</h1>
+      <p class="subtitle">Aide Luna à gagner des étoiles en parlant au présent !</p>
+      <div class="meta-row">
+        <div class="pill">⭐ <span id="score-value">0</span> points</div>
+        <div class="pill">🔥 série: <span id="streak-value">0</span></div>
+        <button id="speak-button" class="pill action-pill" type="button">🔊 Écouter</button>
+      </div>
+      <div class="progress-wrap" aria-label="Progression">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+    </header>
+
+    <section id="game-card" class="card" aria-live="polite">
+      <p class="round-label" id="round-label">Mission 1</p>
+      <h2 id="question-title">Bienvenue !</h2>
+      <p id="question-text">Appuie sur "Commencer" pour jouer.</p>
+      <div id="option-grid" class="option-grid"></div>
+      <p id="feedback" class="feedback"></p>
+      <button id="next-button" class="next-button" type="button">Commencer</button>
+    </section>
+
+    <section class="card badges-card">
+      <h3>Trophées</h3>
+      <div id="badges" class="badge-list">
+        <span class="badge empty">Pas encore de trophée</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
