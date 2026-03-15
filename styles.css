@@ -238,6 +238,10 @@ h3 {
   color: var(--error);
 }
 
+.feedback.warning {
+  color: #c27814;
+}
+
 .next-button {
   background: var(--primary);
   color: #fff;

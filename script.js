@@ -1,14 +1,45 @@
 const PROFILE_STORAGE_KEY = "elsaEnglishProfileV1";
 const DAILY_STORAGE_KEY = "elsaDailyWordsSrsV2";
 
-function writeAgentDebugLog(payload) {
-  if (typeof require !== "function") {
-    return;
-  }
+const memoryFallbackStore = new Map();
+const storageState = {
+  available: true,
+  lastError: ""
+};
+
+function safeStorageGet(key) {
   try {
-    require("fs").appendFileSync("/opt/cursor/logs/debug.log", `${JSON.stringify(payload)}\n`);
-  } catch {
-    // no-op: debug logging must never break app behavior
+    const value = localStorage.getItem(key);
+    storageState.available = true;
+    return value ?? memoryFallbackStore.get(key) ?? null;
+  } catch (error) {
+    storageState.available = false;
+    storageState.lastError = error?.name || "StorageError";
+    return memoryFallbackStore.get(key) ?? null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  memoryFallbackStore.set(key, value);
+  try {
+    localStorage.setItem(key, value);
+    storageState.available = true;
+    return true;
+  } catch (error) {
+    storageState.available = false;
+    storageState.lastError = error?.name || "StorageError";
+    return false;
+  }
+}
+
+function safeStorageRemove(key) {
+  memoryFallbackStore.delete(key);
+  try {
+    localStorage.removeItem(key);
+    storageState.available = true;
+  } catch (error) {
+    storageState.available = false;
+    storageState.lastError = error?.name || "StorageError";
   }
 }
 
@@ -61,6 +92,7 @@ const avatarCatalog = {
 const profileGreeting = document.getElementById("profile-greeting");
 const childNameInput = document.getElementById("child-name-input");
 const saveProfileButton = document.getElementById("save-profile-button");
+const profileSaveStatus = document.getElementById("profile-save-status");
 const avatarCharacter = document.getElementById("avatar-character");
 const avatarStyleLabel = document.getElementById("avatar-style-label");
 
@@ -83,50 +115,9 @@ tabButtons.forEach((button) => {
 });
 
 function loadProfile() {
-  // #region agent log
-  writeAgentDebugLog({
-    hypothesisId: "H1",
-    location: "script.js:loadProfile:entry",
-    message: "Entering loadProfile",
-    data: {
-      profileKey: PROFILE_STORAGE_KEY,
-      href: typeof window !== "undefined" ? window.location.href : "no-window"
-    },
-    timestamp: Date.now()
-  });
-  // #endregion
-
-  let storedRaw;
-  try {
-    storedRaw = localStorage.getItem(PROFILE_STORAGE_KEY);
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H1",
-      location: "script.js:loadProfile:getItem",
-      message: "localStorage.getItem failed for profile",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
-    throw error;
-  }
+  const storedRaw = safeStorageGet(PROFILE_STORAGE_KEY);
   if (!storedRaw) {
     sanitizeProfileValues();
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H5",
-      location: "script.js:loadProfile:exit-no-data",
-      message: "No saved profile found for current origin",
-      data: {
-        origin: typeof window !== "undefined" ? window.location.origin : "no-window"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
     return;
   }
 
@@ -138,42 +129,14 @@ function loadProfile() {
     profileState.nose = stored.nose || profileState.nose;
     profileState.mouth = stored.mouth || profileState.mouth;
     profileState.outfit = stored.outfit || profileState.outfit;
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H3",
-      location: "script.js:loadProfile:parse-or-remove",
-      message: "Profile JSON parse failed or cleanup may fail",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
-    localStorage.removeItem(PROFILE_STORAGE_KEY);
+  } catch {
+    safeStorageRemove(PROFILE_STORAGE_KEY);
   }
   sanitizeProfileValues();
 }
 
 function saveProfile() {
-  try {
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileState));
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H2",
-      location: "script.js:saveProfile:setItem",
-      message: "localStorage.setItem failed for profile",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
-    throw error;
-  }
+  return safeStorageSet(PROFILE_STORAGE_KEY, JSON.stringify(profileState));
 }
 
 function optionById(part, id) {
@@ -196,6 +159,26 @@ function sanitizeProfileValues() {
   if (!optionById("outfit", profileState.outfit)) {
     profileState.outfit = "purple_shirt";
   }
+}
+
+function setProfileSaveStatus(isSaved) {
+  if (isSaved) {
+    profileSaveStatus.textContent = "✅ Profil sauvegardé sur cet appareil.";
+    profileSaveStatus.className = "feedback ok";
+    return;
+  }
+  profileSaveStatus.textContent = "⚠️ Sauvegarde navigateur limitée (mode privé/Safari). Le profil reste actif pendant cette session.";
+  profileSaveStatus.className = "feedback warning";
+}
+
+function refreshProfileStorageStatus() {
+  if (storageState.available) {
+    profileSaveStatus.textContent = "";
+    profileSaveStatus.className = "feedback";
+    return;
+  }
+  profileSaveStatus.textContent = "⚠️ Sauvegarde navigateur limitée (mode privé/Safari). Le profil reste actif pendant cette session.";
+  profileSaveStatus.className = "feedback warning";
 }
 
 function updateProfileView() {
@@ -231,7 +214,7 @@ function renderAvatarOptions() {
       button.addEventListener("click", () => {
         profileState[part] = option.id;
         updateProfileView();
-        saveProfile();
+        setProfileSaveStatus(saveProfile());
       });
       container.appendChild(button);
     });
@@ -242,7 +225,7 @@ saveProfileButton.addEventListener("click", () => {
   const safeName = childNameInput.value.trim() || "Elsa";
   profileState.name = safeName.slice(0, 20);
   updateProfileView();
-  saveProfile();
+  setProfileSaveStatus(saveProfile());
 });
 
 childNameInput.addEventListener("keydown", (event) => {
@@ -824,24 +807,7 @@ function migrateLegacyDailyProgress(raw) {
 }
 
 function loadDailyProgress() {
-  let raw;
-  try {
-    raw = localStorage.getItem(DAILY_STORAGE_KEY);
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H4",
-      location: "script.js:loadDailyProgress:getItem",
-      message: "localStorage.getItem failed for daily progress",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
-    throw error;
-  }
+  const raw = safeStorageGet(DAILY_STORAGE_KEY);
   if (!raw) {
     dailyState.srs = { progress: {}, assignments: {} };
     return;
@@ -854,42 +820,14 @@ function loadDailyProgress() {
       return;
     }
     dailyState.srs = migrateLegacyDailyProgress(parsed);
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H4",
-      location: "script.js:loadDailyProgress:parse-or-remove",
-      message: "Daily progress parse failed or cleanup may fail",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
+  } catch {
     dailyState.srs = { progress: {}, assignments: {} };
-    localStorage.removeItem(DAILY_STORAGE_KEY);
+    safeStorageRemove(DAILY_STORAGE_KEY);
   }
 }
 
 function saveDailyProgress() {
-  try {
-    localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.srs));
-  } catch (error) {
-    // #region agent log
-    writeAgentDebugLog({
-      hypothesisId: "H4",
-      location: "script.js:saveDailyProgress:setItem",
-      message: "localStorage.setItem failed for daily progress",
-      data: {
-        name: error?.name || "unknown",
-        message: error?.message || "unknown"
-      },
-      timestamp: Date.now()
-    });
-    // #endregion
-    throw error;
-  }
+  return safeStorageSet(DAILY_STORAGE_KEY, JSON.stringify(dailyState.srs));
 }
 
 function ensureDailyAssignmentKey(dayKey, seriesName) {
@@ -1218,7 +1156,10 @@ function renderDailyWords() {
 
   const learnedCount = assignedWords.filter((word) => getProgressForWord(word.id).stage >= 1).length;
   const dueCount = dueWords.length;
-  dailyProgress.textContent = `${profileState.name} a appris ${learnedCount}/3 mots aujourd'hui. Révisions dues: ${dueCount}.`;
+  const storageHint = storageState.available
+    ? ""
+    : " ⚠️ Sauvegarde locale limitée sur ce navigateur (session active uniquement).";
+  dailyProgress.textContent = `${profileState.name} a appris ${learnedCount}/3 mots aujourd'hui. Révisions dues: ${dueCount}.${storageHint}`;
 }
 
 seriesButtons.forEach((button) => {
@@ -1440,6 +1381,7 @@ cookingNext.addEventListener("click", nextCookingStep);
 renderAvatarOptions();
 loadProfile();
 updateProfileView();
+refreshProfileStorageStatus();
 loadDailyProgress();
 renderDailyWords();
 resetDailyQuiz();
