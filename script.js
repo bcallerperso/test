@@ -1,5 +1,6 @@
 const PROFILE_STORAGE_KEY = "elsaEnglishProfileV1";
 const DAILY_STORAGE_KEY = "elsaDailyWordsSrsV2";
+const VERB_PROGRAM_STORAGE_KEY = "elsaVerbProgramV1";
 
 const memoryFallbackStore = new Map();
 const storageState = {
@@ -244,7 +245,7 @@ childNameInput.addEventListener("keydown", (event) => {
   }
 });
 
-const missionRounds = [
+const missionRoundsBase = [
   {
     prompt: "Choose the correct sentence.",
     choices: [
@@ -391,6 +392,8 @@ const missionRounds = [
   }
 ];
 
+let missionRounds = [...missionRoundsBase];
+
 const starsByScore = [
   { limit: 6, text: "🌟 Petite étoile" },
   { limit: 11, text: "🌟🌟 Super étoile" },
@@ -416,6 +419,83 @@ const nextButton = document.getElementById("next-button");
 const progressBar = document.getElementById("progress-bar");
 const badgesContainer = document.getElementById("badges");
 const speakButton = document.getElementById("speak-button");
+const verbGeneratorInput = document.getElementById("verb-generator-input");
+const verbGeneratorApply = document.getElementById("verb-generator-apply");
+const verbGeneratorReset = document.getElementById("verb-generator-reset");
+const verbGeneratorCount = document.getElementById("verb-generator-count");
+const verbGeneratorFeedback = document.getElementById("verb-generator-feedback");
+
+const MIN_GENERATED_VERBS = 3;
+const MAX_GENERATED_VERBS = 12;
+const suggestedVerbProgram = ["like", "play", "read", "write", "watch", "go", "do", "drink"];
+
+const missionSubjects = ["She", "He", "Elsa", "My friend"];
+const baseSubjects = ["I", "You", "We", "They"];
+const sprintThirdSubjects = ["he", "she", "Elsa", "your friend"];
+const sprintBaseSubjects = ["you", "they", "we", "I"];
+const verbContextMap = {
+  like: "pizza",
+  play: "football",
+  read: "books",
+  write: "stories",
+  watch: "TV",
+  go: "to school",
+  do: "homework",
+  drink: "water",
+  eat: "apples",
+  cook: "pasta",
+  wear: "a hat",
+  sing: "songs",
+  dance: "every day",
+  run: "fast",
+  help: "her family"
+};
+
+function conjugateThirdPerson(verb) {
+  if (verb === "have") {
+    return "has";
+  }
+  if (verb.endsWith("y") && !"aeiou".includes(verb.at(-2) || "")) {
+    return `${verb.slice(0, -1)}ies`;
+  }
+  if (/(o|s|x|z|ch|sh)$/u.test(verb)) {
+    return `${verb}es`;
+  }
+  return `${verb}s`;
+}
+
+function getVerbTail(verb) {
+  return verbContextMap[verb] || "every day";
+}
+
+function parseVerbProgramInput(rawValue) {
+  const seen = new Set();
+  const valid = [];
+  const rejected = [];
+  const chunks = rawValue
+    .split(/[\n,;]+/u)
+    .map((chunk) => chunk.trim().toLowerCase())
+    .filter(Boolean);
+
+  chunks.forEach((chunk) => {
+    if (!/^[a-z]+$/u.test(chunk)) {
+      rejected.push(chunk);
+      return;
+    }
+    if (seen.has(chunk)) {
+      return;
+    }
+    seen.add(chunk);
+    valid.push(chunk);
+  });
+
+  const trimmed = valid.slice(0, MAX_GENERATED_VERBS);
+  return {
+    verbs: trimmed,
+    rejected,
+    ignoredCount: Math.max(0, valid.length - trimmed.length)
+  };
+}
 
 function updateMissionMeta() {
   scoreValue.textContent = String(missionState.score);
@@ -1033,7 +1113,7 @@ const sprintDoes = document.getElementById("sprint-does");
 const sprintFeedback = document.getElementById("sprint-feedback");
 const sprintNext = document.getElementById("sprint-next");
 
-const sprintRounds = [
+const sprintRoundsBase = [
   { text: "___ you like bananas?", answer: "do" },
   { text: "___ he play football?", answer: "does" },
   { text: "___ they like pasta?", answer: "do" },
@@ -1043,6 +1123,8 @@ const sprintRounds = [
   { text: "___ they write in English class?", answer: "do" },
   { text: "___ he watch TV at night?", answer: "does" }
 ];
+
+let sprintRounds = [...sprintRoundsBase];
 
 function startSprint() {
   sprintState.index = 0;
@@ -1115,7 +1197,7 @@ const builderState = {
   index: -1
 };
 
-const builderRounds = [
+const builderRoundsBase = [
   {
     prompt: "Choisis la phrase correcte pour parler d'elle.",
     choices: ["She likes oranges.", "She like oranges.", "She don't like oranges."],
@@ -1152,6 +1234,8 @@ const builderRounds = [
     answer: "They don't drink coffee."
   }
 ];
+
+let builderRounds = [...builderRoundsBase];
 
 function renderBuilderRound() {
   const round = builderRounds[builderState.index];
@@ -1212,6 +1296,226 @@ function nextBuilderRound() {
 }
 
 builderNext.addEventListener("click", nextBuilderRound);
+
+function createGeneratedMissionRounds(verbs) {
+  return verbs.map((verb, index) => {
+    const useThirdPerson = index % 2 === 0;
+    const subject = useThirdPerson
+      ? missionSubjects[index % missionSubjects.length]
+      : baseSubjects[index % baseSubjects.length];
+    const correctForm = useThirdPerson ? conjugateThirdPerson(verb) : verb;
+    const wrongForm = useThirdPerson ? verb : conjugateThirdPerson(verb);
+    const wrongNegative = useThirdPerson ? `don't ${verb}` : `doesn't ${verb}`;
+    const tail = getVerbTail(verb);
+
+    return {
+      prompt: `Complete: ${subject} ___ ${tail}.`,
+      choices: [
+        { label: correctForm, correct: true },
+        { label: wrongForm, correct: false },
+        { label: wrongNegative, correct: false }
+      ],
+      explanation: useThirdPerson
+        ? `${subject} est à la 3e personne: on utilise ${correctForm}.`
+        : `${subject} utilise la base verbale: ${verb}.`
+    };
+  });
+}
+
+function createGeneratedSprintRounds(verbs) {
+  return verbs.map((verb, index) => {
+    const useThirdPerson = index % 2 === 0;
+    const subject = useThirdPerson
+      ? sprintThirdSubjects[index % sprintThirdSubjects.length]
+      : sprintBaseSubjects[index % sprintBaseSubjects.length];
+
+    return {
+      text: `___ ${subject} ${verb} ${getVerbTail(verb)}?`,
+      answer: useThirdPerson ? "does" : "do"
+    };
+  });
+}
+
+function createGeneratedBuilderRounds(verbs) {
+  return verbs.map((verb, index) => {
+    const useThirdPerson = index % 2 === 0;
+    const subject = useThirdPerson
+      ? missionSubjects[index % missionSubjects.length]
+      : baseSubjects[index % baseSubjects.length];
+    const correctVerb = useThirdPerson ? conjugateThirdPerson(verb) : verb;
+    const wrongVerb = useThirdPerson ? verb : conjugateThirdPerson(verb);
+    const wrongNegative = useThirdPerson ? `don't ${verb}` : `doesn't ${verb}`;
+    const sentenceTail = getVerbTail(verb);
+    const correctSentence = `${subject} ${correctVerb} ${sentenceTail}.`;
+
+    return {
+      prompt: `Choisis la phrase correcte avec "${verb}".`,
+      choices: [
+        correctSentence,
+        `${subject} ${wrongVerb} ${sentenceTail}.`,
+        `${subject} ${wrongNegative} ${sentenceTail}.`
+      ],
+      answer: correctSentence
+    };
+  });
+}
+
+function setVerbGeneratorFeedback(text, type = "") {
+  verbGeneratorFeedback.textContent = text;
+  verbGeneratorFeedback.className = `feedback ${type}`;
+}
+
+function resetMissionForProgram() {
+  missionState.index = -1;
+  missionState.score = 0;
+  missionState.streak = 0;
+  missionState.answered = false;
+  missionState.badges = new Set();
+  optionGrid.innerHTML = "";
+  roundLabel.textContent = "Mission 1";
+  questionTitle.textContent = "Bienvenue !";
+  questionText.textContent = "Appuie sur \"Commencer\" pour jouer.";
+  nextButton.textContent = "Commencer";
+  nextButton.disabled = false;
+  setMissionFeedback("", "");
+  updateBadges();
+  updateMissionMeta();
+}
+
+function resetSprintForProgram() {
+  sprintState.index = -1;
+  sprintState.score = 0;
+  sprintState.currentRound = null;
+  sprintQuestion.textContent = "Appuie sur \"Démarrer sprint\".";
+  sprintFeedback.textContent = "";
+  sprintFeedback.className = "feedback";
+  sprintNext.textContent = "Démarrer sprint";
+  sprintDo.disabled = true;
+  sprintDoes.disabled = true;
+}
+
+function resetBuilderForProgram() {
+  builderState.index = -1;
+  builderPrompt.textContent = "Appuie sur \"Lancer builder\".";
+  builderOptions.innerHTML = "";
+  builderFeedback.textContent = "";
+  builderFeedback.className = "feedback";
+  builderNext.textContent = "Lancer builder";
+  builderNext.disabled = false;
+}
+
+function updateVerbProgramLabel(verbs, isCustom) {
+  if (!isCustom) {
+    verbGeneratorCount.textContent = "Programme actuel: base";
+    return;
+  }
+  const shortList = verbs.slice(0, 6).join(", ");
+  const suffix = verbs.length > 6 ? ", ..." : "";
+  verbGeneratorCount.textContent = `Programme actuel: ${verbs.length} verbes (${shortList}${suffix})`;
+}
+
+function applyGeneratedProgram(verbs, options = {}) {
+  const { persist = true, announce = true } = options;
+  missionRounds = createGeneratedMissionRounds(verbs);
+  sprintRounds = createGeneratedSprintRounds(verbs);
+  builderRounds = createGeneratedBuilderRounds(verbs);
+
+  resetMissionForProgram();
+  resetSprintForProgram();
+  resetBuilderForProgram();
+  updateVerbProgramLabel(verbs, true);
+  verbGeneratorInput.value = verbs.join(", ");
+
+  if (persist) {
+    safeStorageSet(VERB_PROGRAM_STORAGE_KEY, JSON.stringify({ verbs }));
+  }
+
+  if (announce) {
+    setVerbGeneratorFeedback(`✅ ${verbs.length} verbes générés automatiquement dans les 3 jeux.`, "ok");
+  }
+}
+
+function applyBaseProgram(options = {}) {
+  const { clearStorage = true, announce = true } = options;
+  missionRounds = [...missionRoundsBase];
+  sprintRounds = [...sprintRoundsBase];
+  builderRounds = [...builderRoundsBase];
+
+  resetMissionForProgram();
+  resetSprintForProgram();
+  resetBuilderForProgram();
+  verbGeneratorInput.value = suggestedVerbProgram.join(", ");
+  updateVerbProgramLabel([], false);
+
+  if (clearStorage) {
+    safeStorageRemove(VERB_PROGRAM_STORAGE_KEY);
+  }
+
+  if (announce) {
+    setVerbGeneratorFeedback("↩️ Jeux de base restaurés.", "ok");
+  }
+}
+
+function loadSavedVerbProgram() {
+  verbGeneratorInput.value = suggestedVerbProgram.join(", ");
+  updateVerbProgramLabel([], false);
+
+  const raw = safeStorageGet(VERB_PROGRAM_STORAGE_KEY);
+  if (!raw) {
+    setVerbGeneratorFeedback("", "");
+    return;
+  }
+
+  try {
+    const saved = JSON.parse(raw);
+    if (!saved || !Array.isArray(saved.verbs)) {
+      safeStorageRemove(VERB_PROGRAM_STORAGE_KEY);
+      setVerbGeneratorFeedback("", "");
+      return;
+    }
+    const verbs = saved.verbs.filter((item) => typeof item === "string" && /^[a-z]+$/u.test(item));
+    if (verbs.length < MIN_GENERATED_VERBS) {
+      safeStorageRemove(VERB_PROGRAM_STORAGE_KEY);
+      setVerbGeneratorFeedback("", "");
+      return;
+    }
+    applyGeneratedProgram(verbs.slice(0, MAX_GENERATED_VERBS), { persist: false, announce: false });
+    setVerbGeneratorFeedback("ℹ️ Programme personnalisé rechargé.", "warning");
+  } catch {
+    safeStorageRemove(VERB_PROGRAM_STORAGE_KEY);
+    setVerbGeneratorFeedback("", "");
+  }
+}
+
+verbGeneratorApply.addEventListener("click", () => {
+  const { verbs, rejected, ignoredCount } = parseVerbProgramInput(verbGeneratorInput.value);
+
+  if (verbs.length < MIN_GENERATED_VERBS) {
+    setVerbGeneratorFeedback(`Ajoute au moins ${MIN_GENERATED_VERBS} verbes simples (ex: play, read, write).`, "error");
+    return;
+  }
+
+  applyGeneratedProgram(verbs, { persist: true, announce: false });
+
+  const warnings = [];
+  if (rejected.length > 0) {
+    warnings.push(`ignorés: ${rejected.slice(0, 4).join(", ")}${rejected.length > 4 ? ", ..." : ""}`);
+  }
+  if (ignoredCount > 0) {
+    warnings.push(`limite à ${MAX_GENERATED_VERBS} verbes`);
+  }
+
+  if (warnings.length > 0) {
+    setVerbGeneratorFeedback(`✅ ${verbs.length} verbes générés (${warnings.join(" · ")}).`, "warning");
+    return;
+  }
+
+  setVerbGeneratorFeedback(`✅ ${verbs.length} verbes générés automatiquement dans les 3 jeux.`, "ok");
+});
+
+verbGeneratorReset.addEventListener("click", () => {
+  applyBaseProgram({ clearStorage: true, announce: true });
+});
 
 const vocabSeries = {
   animals: [
@@ -1918,6 +2222,7 @@ renderAvatarOptions();
 loadProfile();
 updateProfileView();
 refreshProfileStorageStatus();
+loadSavedVerbProgram();
 loadDailyProgress();
 renderDailyWords();
 resetDailyQuiz();

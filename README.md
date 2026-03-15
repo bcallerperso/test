@@ -23,6 +23,7 @@ Option iPad:
   - verbes du quotidien ajoutés: `play`, `read`, `write`, `watch`, `go`, `do`, `drink`
   - Sprint `Do/Does`
   - Phrase Builder
+  - mode génération automatique: entre 3 à 12 verbes et les 3 jeux se régénèrent
 - Révision leçon `Food`:
   - vocabulaire aliments (bananas, milk, chicken...)
   - questions/réponses `Do you like ...?`

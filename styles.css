@@ -136,6 +136,13 @@ h1 {
   font-size: 1rem;
 }
 
+.textarea-input {
+  width: 100%;
+  resize: vertical;
+  margin: 8px 0 10px;
+  font-family: inherit;
+}
+
 .action-pill {
   cursor: pointer;
   min-height: 48px;

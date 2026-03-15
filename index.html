@@ -123,6 +123,24 @@
         <button id="builder-next" class="next-button" type="button">Lancer builder</button>
       </article>
 
+      <article class="card" aria-live="polite">
+        <h3>⚙️ Mode génération automatique</h3>
+        <p class="subtitle small">Entre 3 à 12 verbes (un par ligne ou séparés par des virgules). Les 3 jeux se génèrent automatiquement.</p>
+        <textarea
+          id="verb-generator-input"
+          class="text-input textarea-input"
+          rows="4"
+          placeholder="like, play, read, write, watch, go, do, drink"
+          aria-label="Liste de verbes à générer"
+        ></textarea>
+        <div class="inline-wrap">
+          <button id="verb-generator-apply" class="next-button inline-button" type="button">Générer les jeux</button>
+          <button id="verb-generator-reset" class="option-button compact inline-button" type="button">Revenir aux jeux de base</button>
+        </div>
+        <p id="verb-generator-count" class="round-label">Programme actuel: base</p>
+        <p id="verb-generator-feedback" class="feedback"></p>
+      </article>
+
       <article class="card badges-card">
         <h3>Trophées</h3>
         <div id="badges" class="badge-list">
