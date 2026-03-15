@@ -1,6 +1,17 @@
 const PROFILE_STORAGE_KEY = "elsaEnglishProfileV1";
 const DAILY_STORAGE_KEY = "elsaDailyWordsSrsV2";
 
+function writeAgentDebugLog(payload) {
+  if (typeof require !== "function") {
+    return;
+  }
+  try {
+    require("fs").appendFileSync("/opt/cursor/logs/debug.log", `${JSON.stringify(payload)}\n`);
+  } catch {
+    // no-op: debug logging must never break app behavior
+  }
+}
+
 const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
 const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
 
@@ -72,9 +83,50 @@ tabButtons.forEach((button) => {
 });
 
 function loadProfile() {
-  const storedRaw = localStorage.getItem(PROFILE_STORAGE_KEY);
+  // #region agent log
+  writeAgentDebugLog({
+    hypothesisId: "H1",
+    location: "script.js:loadProfile:entry",
+    message: "Entering loadProfile",
+    data: {
+      profileKey: PROFILE_STORAGE_KEY,
+      href: typeof window !== "undefined" ? window.location.href : "no-window"
+    },
+    timestamp: Date.now()
+  });
+  // #endregion
+
+  let storedRaw;
+  try {
+    storedRaw = localStorage.getItem(PROFILE_STORAGE_KEY);
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H1",
+      location: "script.js:loadProfile:getItem",
+      message: "localStorage.getItem failed for profile",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
+    throw error;
+  }
   if (!storedRaw) {
     sanitizeProfileValues();
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H5",
+      location: "script.js:loadProfile:exit-no-data",
+      message: "No saved profile found for current origin",
+      data: {
+        origin: typeof window !== "undefined" ? window.location.origin : "no-window"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
     return;
   }
 
@@ -86,14 +138,42 @@ function loadProfile() {
     profileState.nose = stored.nose || profileState.nose;
     profileState.mouth = stored.mouth || profileState.mouth;
     profileState.outfit = stored.outfit || profileState.outfit;
-  } catch {
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H3",
+      location: "script.js:loadProfile:parse-or-remove",
+      message: "Profile JSON parse failed or cleanup may fail",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
     localStorage.removeItem(PROFILE_STORAGE_KEY);
   }
   sanitizeProfileValues();
 }
 
 function saveProfile() {
-  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileState));
+  try {
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileState));
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H2",
+      location: "script.js:saveProfile:setItem",
+      message: "localStorage.setItem failed for profile",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
+    throw error;
+  }
 }
 
 function optionById(part, id) {
@@ -744,7 +824,24 @@ function migrateLegacyDailyProgress(raw) {
 }
 
 function loadDailyProgress() {
-  const raw = localStorage.getItem(DAILY_STORAGE_KEY);
+  let raw;
+  try {
+    raw = localStorage.getItem(DAILY_STORAGE_KEY);
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H4",
+      location: "script.js:loadDailyProgress:getItem",
+      message: "localStorage.getItem failed for daily progress",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
+    throw error;
+  }
   if (!raw) {
     dailyState.srs = { progress: {}, assignments: {} };
     return;
@@ -757,14 +854,42 @@ function loadDailyProgress() {
       return;
     }
     dailyState.srs = migrateLegacyDailyProgress(parsed);
-  } catch {
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H4",
+      location: "script.js:loadDailyProgress:parse-or-remove",
+      message: "Daily progress parse failed or cleanup may fail",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
     dailyState.srs = { progress: {}, assignments: {} };
     localStorage.removeItem(DAILY_STORAGE_KEY);
   }
 }
 
 function saveDailyProgress() {
-  localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.srs));
+  try {
+    localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(dailyState.srs));
+  } catch (error) {
+    // #region agent log
+    writeAgentDebugLog({
+      hypothesisId: "H4",
+      location: "script.js:saveDailyProgress:setItem",
+      message: "localStorage.setItem failed for daily progress",
+      data: {
+        name: error?.name || "unknown",
+        message: error?.message || "unknown"
+      },
+      timestamp: Date.now()
+    });
+    // #endregion
+    throw error;
+  }
 }
 
 function ensureDailyAssignmentKey(dayKey, seriesName) {
