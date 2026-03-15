@@ -7,6 +7,15 @@ const storageState = {
   lastError: ""
 };
 
+function shuffleArray(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
 function safeStorageGet(key) {
   try {
     const value = localStorage.getItem(key);
@@ -419,7 +428,8 @@ function renderMissionRound() {
   nextButton.disabled = true;
   optionGrid.innerHTML = "";
 
-  round.choices.forEach((choice) => {
+  const randomizedChoices = shuffleArray(round.choices);
+  randomizedChoices.forEach((choice) => {
     const button = document.createElement("button");
     button.className = "option-button";
     button.type = "button";
@@ -643,7 +653,8 @@ function renderFoodRound() {
   foodNextButton.textContent = "Suivant";
   foodNextButton.disabled = true;
 
-  round.choices.forEach((choice) => {
+  const randomizedChoices = shuffleArray(round.choices);
+  randomizedChoices.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "option-button";
@@ -846,7 +857,8 @@ function renderBuilderRound() {
   builderNext.disabled = true;
   builderNext.textContent = "Suivant";
 
-  round.choices.forEach((choice) => {
+  const randomizedChoices = shuffleArray(round.choices);
+  randomizedChoices.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "option-button";
@@ -1282,7 +1294,7 @@ function renderDailyQuizRound() {
     .slice(0, 3)
     .map((item) => item.en);
 
-  const options = [word.en, ...distractors].sort((left, right) => left.localeCompare(right));
+  const options = shuffleArray([word.en, ...distractors]);
   options.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -1502,7 +1514,8 @@ function renderCookingStep() {
   cookingNext.textContent = "Étape suivante";
   cookingOptions.innerHTML = "";
 
-  step.choices.forEach((choice) => {
+  const randomizedChoices = shuffleArray(step.choices);
+  randomizedChoices.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "option-button";
