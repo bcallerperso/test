@@ -334,13 +334,67 @@ const missionRounds = [
       { label: "doesn't like", correct: false }
     ],
     explanation: "They + like."
+  },
+  {
+    prompt: "Complete: She ___ books every evening.",
+    choices: [
+      { label: "reads", correct: true },
+      { label: "read", correct: false },
+      { label: "doesn't reads", correct: false }
+    ],
+    explanation: "She + reads."
+  },
+  {
+    prompt: "Complete: He ___ football on Saturday.",
+    choices: [
+      { label: "play", correct: false },
+      { label: "plays", correct: true },
+      { label: "don't play", correct: false }
+    ],
+    explanation: "He + plays."
+  },
+  {
+    prompt: "Choose the correct sentence.",
+    choices: [
+      { label: "I do my homework every day.", correct: true },
+      { label: "I does my homework every day.", correct: false },
+      { label: "I doing my homework every day.", correct: false }
+    ],
+    explanation: "I + do."
+  },
+  {
+    prompt: "Complete the question: ___ she watch TV at night?",
+    choices: [
+      { label: "Do", correct: false },
+      { label: "Does", correct: true },
+      { label: "Is", correct: false }
+    ],
+    explanation: "Avec she, la question commence par Does."
+  },
+  {
+    prompt: "Choose the correct negative sentence.",
+    choices: [
+      { label: "They don't drink milk in the morning.", correct: true },
+      { label: "They doesn't drink milk in the morning.", correct: false },
+      { label: "They don't drinks milk in the morning.", correct: false }
+    ],
+    explanation: "They + don't drink."
+  },
+  {
+    prompt: "Complete: We ___ to school at 8 o'clock.",
+    choices: [
+      { label: "goes", correct: false },
+      { label: "go", correct: true },
+      { label: "doesn't go", correct: false }
+    ],
+    explanation: "We + go."
   }
 ];
 
 const starsByScore = [
-  { limit: 4, text: "🌟 Petite étoile" },
-  { limit: 7, text: "🌟🌟 Super étoile" },
-  { limit: 10, text: "🌟🌟🌟 English Hero" }
+  { limit: 6, text: "🌟 Petite étoile" },
+  { limit: 11, text: "🌟🌟 Super étoile" },
+  { limit: 16, text: "🌟🌟🌟 English Hero" }
 ];
 
 const missionState = {
@@ -984,7 +1038,10 @@ const sprintRounds = [
   { text: "___ he play football?", answer: "does" },
   { text: "___ they like pasta?", answer: "do" },
   { text: "___ she cook pancakes?", answer: "does" },
-  { text: "___ we have a story today?", answer: "do" }
+  { text: "___ we have a story today?", answer: "do" },
+  { text: "___ she read comics every day?", answer: "does" },
+  { text: "___ they write in English class?", answer: "do" },
+  { text: "___ he watch TV at night?", answer: "does" }
 ];
 
 function startSprint() {
@@ -1073,6 +1130,26 @@ const builderRounds = [
     prompt: "Choisis la bonne question.",
     choices: ["Do you like fish and chips?", "Does you like fish and chips?", "Are you like fish and chips?"],
     answer: "Do you like fish and chips?"
+  },
+  {
+    prompt: "Choisis la phrase correcte.",
+    choices: ["He plays football on Sunday.", "He play football on Sunday.", "He don't play football on Sunday."],
+    answer: "He plays football on Sunday."
+  },
+  {
+    prompt: "Choisis la phrase correcte.",
+    choices: ["We go to school by bus.", "We goes to school by bus.", "We doesn't go to school by bus."],
+    answer: "We go to school by bus."
+  },
+  {
+    prompt: "Choisis la question correcte.",
+    choices: ["Does she read books at night?", "Do she read books at night?", "Does she reads books at night?"],
+    answer: "Does she read books at night?"
+  },
+  {
+    prompt: "Choisis la phrase négative correcte.",
+    choices: ["They don't drink coffee.", "They doesn't drink coffee.", "They don't drinks coffee."],
+    answer: "They don't drink coffee."
   }
 ];
 

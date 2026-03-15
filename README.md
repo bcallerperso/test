@@ -20,6 +20,7 @@ Option iPad:
 - Profil enfant (prénom + avatar personnalisable: cheveux, yeux, nez, bouche, tenue)
 - Verbes au présent:
   - Aventure quiz (`I like`, `She likes`, `Do/Does`, `Can you`)
+  - verbes du quotidien ajoutés: `play`, `read`, `write`, `watch`, `go`, `do`, `drink`
   - Sprint `Do/Does`
   - Phrase Builder
 - Révision leçon `Food`:
