@@ -26,6 +26,10 @@ Option iPad:
   - vocabulaire aliments (bananas, milk, chicken...)
   - questions/réponses `Do you like ...?`
   - phrases `Mr Wolf likes pancakes`, `I like ... but I don't like ...`
+- Jeu `Left / Right Maze`:
+  - cheval dans un labyrinthe
+  - commandes en anglais: `Turn left`, `Turn right`, `Go straight on`
+  - objectif: atteindre la carotte
 - `3 mots du jour` (séries: animaux et habits)
   - révisions intelligentes (`J+1`, `J+3`, `J+7`, puis consolidation)
   - challenge mémoire quotidien

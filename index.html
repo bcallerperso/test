@@ -16,6 +16,7 @@
         <button class="tab-button active" data-tab-target="tab-profile" type="button" role="tab" aria-selected="true">👧 Profil</button>
         <button class="tab-button" data-tab-target="tab-present" type="button" role="tab" aria-selected="false">🧠 Verbes au présent</button>
         <button class="tab-button" data-tab-target="tab-food" type="button" role="tab" aria-selected="false">🍎 Leçon Food</button>
+        <button class="tab-button" data-tab-target="tab-maze" type="button" role="tab" aria-selected="false">🐴 Left & Right Maze</button>
         <button class="tab-button" data-tab-target="tab-daily" type="button" role="tab" aria-selected="false">📚 3 mots du jour</button>
         <button class="tab-button" data-tab-target="tab-cooking" type="button" role="tab" aria-selected="false">👩‍🍳 Cuisine</button>
       </div>
@@ -179,6 +180,31 @@
         <div id="food-options" class="option-grid"></div>
         <p id="food-feedback" class="feedback"></p>
         <button id="food-next-button" class="next-button" type="button">Commencer la révision</button>
+      </article>
+    </section>
+
+    <section id="tab-maze" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Horse Maze - Left & Right</h2>
+        <p class="subtitle small">Aide le cheval à trouver la carotte en suivant les commandes en anglais.</p>
+        <div class="meta-row">
+          <div class="pill">🗺️ niveau: <span id="maze-level-value">1</span></div>
+          <div class="pill">👣 moves: <span id="maze-moves-value">0</span></div>
+          <button id="maze-speak-button" class="pill action-pill" type="button">🔊 Lire la commande</button>
+        </div>
+        <p id="maze-facing" class="round-label">Facing: East ➡️</p>
+        <p id="maze-command" class="subtitle small">Command: Go straight on.</p>
+        <div id="maze-grid" class="maze-grid" aria-label="Labyrinthe du cheval"></div>
+        <div class="inline-wrap">
+          <button id="maze-left-button" class="option-button compact" type="button">↩️ Turn left</button>
+          <button id="maze-straight-button" class="option-button compact" type="button">⬆️ Go straight on</button>
+          <button id="maze-right-button" class="option-button compact" type="button">↪️ Turn right</button>
+        </div>
+        <p id="maze-feedback" class="feedback"></p>
+        <div class="inline-wrap">
+          <button id="maze-reset-button" class="next-button inline-button" type="button">Recommencer niveau</button>
+          <button id="maze-next-level-button" class="next-button inline-button" type="button" disabled>Niveau suivant</button>
+        </div>
       </article>
     </section>
 

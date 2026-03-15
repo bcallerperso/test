@@ -739,6 +739,234 @@ function nextFoodRound() {
 foodNextButton.addEventListener("click", nextFoodRound);
 foodSpeakButton.addEventListener("click", speakFoodRound);
 
+const mazeLevels = [
+  {
+    name: "Meadow Maze",
+    map: [
+      "#######",
+      "#.....#",
+      "###.#.#",
+      "#...#.#",
+      "#.###.#",
+      "#.....#",
+      "#######"
+    ],
+    start: { row: 1, col: 1, dir: "E" },
+    goal: { row: 5, col: 5 }
+  },
+  {
+    name: "Forest Maze",
+    map: [
+      "########",
+      "#..#...#",
+      "#.##.#.#",
+      "#....#.#",
+      "###.##.#",
+      "#...#..#",
+      "#.#...##",
+      "########"
+    ],
+    start: { row: 1, col: 1, dir: "E" },
+    goal: { row: 6, col: 5 }
+  },
+  {
+    name: "Castle Maze",
+    map: [
+      "#########",
+      "#...#...#",
+      "#.#.#.#.#",
+      "#.#...#.#",
+      "#.#####.#",
+      "#.....#.#",
+      "###.#.#.#",
+      "#...#...#",
+      "#########"
+    ],
+    start: { row: 1, col: 1, dir: "E" },
+    goal: { row: 7, col: 7 }
+  }
+];
+
+const mazeDirections = ["N", "E", "S", "W"];
+const mazeDirectionVectors = {
+  N: [-1, 0],
+  E: [0, 1],
+  S: [1, 0],
+  W: [0, -1]
+};
+
+const mazeDirectionLabels = {
+  N: "North ⬆️",
+  E: "East ➡️",
+  S: "South ⬇️",
+  W: "West ⬅️"
+};
+
+const mazeState = {
+  levelIndex: 0,
+  row: 0,
+  col: 0,
+  dir: "E",
+  moves: 0,
+  won: false,
+  lastCommand: "Go straight on."
+};
+
+const mazeLevelValue = document.getElementById("maze-level-value");
+const mazeMovesValue = document.getElementById("maze-moves-value");
+const mazeFacing = document.getElementById("maze-facing");
+const mazeCommand = document.getElementById("maze-command");
+const mazeGrid = document.getElementById("maze-grid");
+const mazeFeedback = document.getElementById("maze-feedback");
+const mazeLeftButton = document.getElementById("maze-left-button");
+const mazeStraightButton = document.getElementById("maze-straight-button");
+const mazeRightButton = document.getElementById("maze-right-button");
+const mazeSpeakButton = document.getElementById("maze-speak-button");
+const mazeResetButton = document.getElementById("maze-reset-button");
+const mazeNextLevelButton = document.getElementById("maze-next-level-button");
+
+function getCurrentMazeLevel() {
+  return mazeLevels[mazeState.levelIndex];
+}
+
+function setMazeFeedback(text, type) {
+  mazeFeedback.textContent = text;
+  mazeFeedback.className = `feedback ${type}`;
+}
+
+function updateMazeMeta() {
+  mazeLevelValue.textContent = String(mazeState.levelIndex + 1);
+  mazeMovesValue.textContent = String(mazeState.moves);
+  mazeFacing.textContent = `Facing: ${mazeDirectionLabels[mazeState.dir]}`;
+  mazeCommand.textContent = `Command: ${mazeState.lastCommand}`;
+}
+
+function renderMazeGrid() {
+  const level = getCurrentMazeLevel();
+  const rows = level.map.length;
+  const cols = level.map[0].length;
+  mazeGrid.style.setProperty("--maze-cols", cols);
+  mazeGrid.innerHTML = "";
+
+  for (let rowIndex = 0; rowIndex < rows; rowIndex += 1) {
+    for (let colIndex = 0; colIndex < cols; colIndex += 1) {
+      const symbol = level.map[rowIndex][colIndex];
+      const cell = document.createElement("div");
+      cell.className = `maze-cell ${symbol === "#" ? "wall" : "path"}`;
+
+      const isGoal = rowIndex === level.goal.row && colIndex === level.goal.col;
+      const isHorse = rowIndex === mazeState.row && colIndex === mazeState.col;
+
+      if (isGoal) {
+        cell.classList.add("goal");
+      }
+      if (isHorse) {
+        cell.classList.add("horse");
+      }
+
+      if (isHorse && isGoal) {
+        cell.textContent = "🏆";
+      } else if (isHorse) {
+        cell.textContent = "🐴";
+      } else if (isGoal) {
+        cell.textContent = "🥕";
+      }
+
+      mazeGrid.appendChild(cell);
+    }
+  }
+}
+
+function resetMazeLevel() {
+  const level = getCurrentMazeLevel();
+  mazeState.row = level.start.row;
+  mazeState.col = level.start.col;
+  mazeState.dir = level.start.dir;
+  mazeState.moves = 0;
+  mazeState.won = false;
+  mazeState.lastCommand = "Go straight on.";
+  mazeNextLevelButton.disabled = true;
+  setMazeFeedback(`Level ${mazeState.levelIndex + 1}: Reach the carrot!`, "");
+  updateMazeMeta();
+  renderMazeGrid();
+}
+
+function moveToMazeLevel(levelIndex) {
+  mazeState.levelIndex = levelIndex % mazeLevels.length;
+  resetMazeLevel();
+}
+
+function speakMazeCommand() {
+  if (!window.speechSynthesis) {
+    return;
+  }
+  const utterance = new SpeechSynthesisUtterance(mazeState.lastCommand);
+  utterance.lang = "en-GB";
+  utterance.rate = 0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function applyMazeCommand(command) {
+  if (mazeState.won) {
+    setMazeFeedback("Great! Click next level to continue.", "ok");
+    return;
+  }
+
+  const commandLabels = {
+    left: "Turn left.",
+    straight: "Go straight on.",
+    right: "Turn right."
+  };
+  mazeState.lastCommand = commandLabels[command];
+
+  let directionIndex = mazeDirections.indexOf(mazeState.dir);
+  if (command === "left") {
+    directionIndex = (directionIndex + 3) % mazeDirections.length;
+  } else if (command === "right") {
+    directionIndex = (directionIndex + 1) % mazeDirections.length;
+  }
+  mazeState.dir = mazeDirections[directionIndex];
+
+  const [deltaRow, deltaCol] = mazeDirectionVectors[mazeState.dir];
+  const targetRow = mazeState.row + deltaRow;
+  const targetCol = mazeState.col + deltaCol;
+  const level = getCurrentMazeLevel();
+  const cell = level.map[targetRow]?.[targetCol];
+
+  if (!cell || cell === "#") {
+    setMazeFeedback("Oops, wall! Try another command.", "error");
+    updateMazeMeta();
+    renderMazeGrid();
+    return;
+  }
+
+  mazeState.row = targetRow;
+  mazeState.col = targetCol;
+  mazeState.moves += 1;
+  setMazeFeedback(`Nice move: ${mazeState.lastCommand}`, "ok");
+
+  if (mazeState.row === level.goal.row && mazeState.col === level.goal.col) {
+    mazeState.won = true;
+    mazeNextLevelButton.disabled = false;
+    setMazeFeedback(`🎉 Well done ${profileState.name}! You reached the carrot in ${mazeState.moves} moves.`, "ok");
+  }
+
+  updateMazeMeta();
+  renderMazeGrid();
+}
+
+mazeLeftButton.addEventListener("click", () => applyMazeCommand("left"));
+mazeStraightButton.addEventListener("click", () => applyMazeCommand("straight"));
+mazeRightButton.addEventListener("click", () => applyMazeCommand("right"));
+mazeSpeakButton.addEventListener("click", speakMazeCommand);
+mazeResetButton.addEventListener("click", resetMazeLevel);
+mazeNextLevelButton.addEventListener("click", () => {
+  moveToMazeLevel((mazeState.levelIndex + 1) % mazeLevels.length);
+});
+
+moveToMazeLevel(0);
+
 const sprintState = {
   index: -1,
   score: 0,
