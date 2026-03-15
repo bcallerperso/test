@@ -15,6 +15,7 @@
       <div class="tab-row" role="tablist" aria-label="Modes de jeu">
         <button class="tab-button active" data-tab-target="tab-profile" type="button" role="tab" aria-selected="true">👧 Profil</button>
         <button class="tab-button" data-tab-target="tab-present" type="button" role="tab" aria-selected="false">🧠 Verbes au présent</button>
+        <button class="tab-button" data-tab-target="tab-food" type="button" role="tab" aria-selected="false">🍎 Leçon Food</button>
         <button class="tab-button" data-tab-target="tab-daily" type="button" role="tab" aria-selected="false">📚 3 mots du jour</button>
         <button class="tab-button" data-tab-target="tab-cooking" type="button" role="tab" aria-selected="false">👩‍🍳 Cuisine</button>
       </div>
@@ -157,6 +158,27 @@
         <div id="daily-quiz-options" class="option-grid"></div>
         <p id="daily-quiz-feedback" class="feedback"></p>
         <button id="daily-quiz-next" class="next-button" type="button">Démarrer challenge</button>
+      </article>
+    </section>
+
+    <section id="tab-food" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Food Lesson Challenge</h2>
+        <p class="subtitle small">Révision de la leçon : aliments + questions "Do you like...?"</p>
+        <div class="meta-row">
+          <div class="pill">⭐ <span id="food-score-value">0</span> points</div>
+          <div class="pill">🔥 série: <span id="food-streak-value">0</span></div>
+          <button id="food-speak-button" class="pill action-pill" type="button">🔊 Lire</button>
+        </div>
+        <div class="progress-wrap">
+          <div id="food-progress-bar" class="progress-bar"></div>
+        </div>
+        <p id="food-round-label" class="round-label">Question 1</p>
+        <h3 id="food-title">Prête pour la révision ?</h3>
+        <p id="food-prompt">Appuie sur "Commencer la révision".</p>
+        <div id="food-options" class="option-grid"></div>
+        <p id="food-feedback" class="feedback"></p>
+        <button id="food-next-button" class="next-button" type="button">Commencer la révision</button>
       </article>
     </section>
 

@@ -22,6 +22,10 @@ Option iPad:
   - Aventure quiz (`I like`, `She likes`, `Do/Does`, `Can you`)
   - Sprint `Do/Does`
   - Phrase Builder
+- Révision leçon `Food`:
+  - vocabulaire aliments (bananas, milk, chicken...)
+  - questions/réponses `Do you like ...?`
+  - phrases `Mr Wolf likes pancakes`, `I like ... but I don't like ...`
 - `3 mots du jour` (séries: animaux et habits)
   - révisions intelligentes (`J+1`, `J+3`, `J+7`, puis consolidation)
   - challenge mémoire quotidien

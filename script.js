@@ -510,6 +510,224 @@ function nextMissionRound() {
 nextButton.addEventListener("click", nextMissionRound);
 speakButton.addEventListener("click", speakCurrentText);
 
+const foodLessonRounds = [
+  {
+    prompt: "Traduis en anglais : bananes",
+    choices: ["bananas", "lemons", "pies"],
+    answer: "bananas",
+    explanation: "bananes = bananas."
+  },
+  {
+    prompt: "Traduis en anglais : lait",
+    choices: ["water", "milk", "ice-creams"],
+    answer: "milk",
+    explanation: "lait = milk."
+  },
+  {
+    prompt: "Complète la question: ___ you like fish and chips?",
+    choices: ["Do", "Does", "Can"],
+    answer: "Do",
+    explanation: "Avec you, on utilise Do."
+  },
+  {
+    prompt: "Réponse positive correcte:",
+    choices: ["Yes, I do.", "Yes, I like.", "Yes, I am."],
+    answer: "Yes, I do.",
+    explanation: "Pour répondre à Do you... : Yes, I do."
+  },
+  {
+    prompt: "Réponse négative correcte:",
+    choices: ["No, I don't.", "No, I doesn't.", "No, I am not."],
+    answer: "No, I don't.",
+    explanation: "Pour répondre négativement: No, I don't."
+  },
+  {
+    prompt: "Complète: Mr Wolf ___ pancakes.",
+    choices: ["like", "likes", "don't like"],
+    answer: "likes",
+    explanation: "Mr Wolf = he, donc likes."
+  },
+  {
+    prompt: "Complète: He ___ pancakes.",
+    choices: ["like", "likes", "doesn't likes"],
+    answer: "likes",
+    explanation: "He + likes."
+  },
+  {
+    prompt: "Choisis la phrase correcte :",
+    choices: [
+      "I like cheese but I don't like apples.",
+      "I likes cheese but I don't like apples.",
+      "I like cheese but I doesn't like apples."
+    ],
+    answer: "I like cheese but I don't like apples.",
+    explanation: "I + like / I don't like."
+  },
+  {
+    prompt: "Traduis en anglais : biscuits au chocolat",
+    choices: ["chocolate biscuits", "sweets biscuits", "pies chocolate"],
+    answer: "chocolate biscuits",
+    explanation: "biscuits au chocolat = chocolate biscuits."
+  },
+  {
+    prompt: "Complète: She ___ cake.",
+    choices: ["like", "likes", "don't like"],
+    answer: "likes",
+    explanation: "She + likes."
+  },
+  {
+    prompt: "Traduis en anglais : poulet",
+    choices: ["pasta", "chicken", "vegetables"],
+    answer: "chicken",
+    explanation: "poulet = chicken."
+  },
+  {
+    prompt: "Complète: We ___ vegetables.",
+    choices: ["likes", "like", "doesn't like"],
+    answer: "like",
+    explanation: "We + like."
+  }
+];
+
+const foodState = {
+  index: -1,
+  score: 0,
+  streak: 0,
+  answered: false
+};
+
+const foodScoreValue = document.getElementById("food-score-value");
+const foodStreakValue = document.getElementById("food-streak-value");
+const foodProgressBar = document.getElementById("food-progress-bar");
+const foodRoundLabel = document.getElementById("food-round-label");
+const foodTitle = document.getElementById("food-title");
+const foodPrompt = document.getElementById("food-prompt");
+const foodOptions = document.getElementById("food-options");
+const foodFeedback = document.getElementById("food-feedback");
+const foodNextButton = document.getElementById("food-next-button");
+const foodSpeakButton = document.getElementById("food-speak-button");
+
+function updateFoodMeta() {
+  foodScoreValue.textContent = String(foodState.score);
+  foodStreakValue.textContent = String(foodState.streak);
+  const ratio = foodState.index < 0 ? 0 : ((foodState.index + 1) / foodLessonRounds.length) * 100;
+  foodProgressBar.style.width = `${Math.min(100, Math.max(0, ratio))}%`;
+}
+
+function setFoodFeedback(text, type) {
+  foodFeedback.textContent = text;
+  foodFeedback.className = `feedback ${type}`;
+}
+
+function speakFoodRound() {
+  const round = foodLessonRounds[foodState.index];
+  if (!window.speechSynthesis || !round) {
+    return;
+  }
+  const message = `${round.prompt}. ${round.choices.join(". ")}`;
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.lang = "en-GB";
+  utterance.rate = 0.88;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function renderFoodRound() {
+  const round = foodLessonRounds[foodState.index];
+  foodState.answered = false;
+  foodRoundLabel.textContent = `Question ${foodState.index + 1} / ${foodLessonRounds.length}`;
+  foodTitle.textContent = "Choisis la bonne réponse";
+  foodPrompt.textContent = round.prompt;
+  setFoodFeedback("", "");
+  foodOptions.innerHTML = "";
+  foodNextButton.textContent = "Suivant";
+  foodNextButton.disabled = true;
+
+  round.choices.forEach((choice) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option-button";
+    button.textContent = choice;
+    button.addEventListener("click", () => handleFoodAnswer(button, choice === round.answer, round.answer, round.explanation));
+    foodOptions.appendChild(button);
+  });
+
+  updateFoodMeta();
+}
+
+function handleFoodAnswer(button, isCorrect, answer, explanation) {
+  if (foodState.answered) {
+    return;
+  }
+
+  foodState.answered = true;
+  const buttons = Array.from(foodOptions.querySelectorAll(".option-button"));
+  buttons.forEach((item) => {
+    item.disabled = true;
+    if (item.textContent === answer) {
+      item.classList.add("good");
+    }
+  });
+
+  if (isCorrect) {
+    foodState.score += 1;
+    foodState.streak += 1;
+    setFoodFeedback(`Bravo ${profileState.name} ! ${explanation}`, "ok");
+  } else {
+    button.classList.add("bad");
+    foodState.streak = 0;
+    setFoodFeedback(`Presque ! ${explanation}`, "error");
+  }
+
+  updateFoodMeta();
+  foodNextButton.disabled = false;
+}
+
+function renderFoodEnd() {
+  foodState.index = foodLessonRounds.length;
+  foodOptions.innerHTML = "";
+  foodRoundLabel.textContent = "Leçon terminée";
+  foodTitle.textContent = `🎉 Great job ${profileState.name}!`;
+  const medal = foodState.score >= 10 ? "🌟🌟🌟" : foodState.score >= 7 ? "🌟🌟" : "🌟";
+  foodPrompt.textContent = `Score final: ${foodState.score}/${foodLessonRounds.length} ${medal}`;
+  setFoodFeedback("Tu peux rejouer cette leçon pour renforcer la mémoire.", "ok");
+  foodNextButton.textContent = "Rejouer";
+  foodNextButton.disabled = false;
+  updateFoodMeta();
+}
+
+function resetFoodGame() {
+  foodState.index = 0;
+  foodState.score = 0;
+  foodState.streak = 0;
+  foodState.answered = false;
+  updateFoodMeta();
+}
+
+function nextFoodRound() {
+  if (foodState.index < 0) {
+    foodState.index = 0;
+    renderFoodRound();
+    return;
+  }
+
+  if (foodState.index >= foodLessonRounds.length) {
+    resetFoodGame();
+    renderFoodRound();
+    return;
+  }
+
+  foodState.index += 1;
+  if (foodState.index === foodLessonRounds.length) {
+    renderFoodEnd();
+    return;
+  }
+  renderFoodRound();
+}
+
+foodNextButton.addEventListener("click", nextFoodRound);
+foodSpeakButton.addEventListener("click", speakFoodRound);
+
 const sprintState = {
   index: -1,
   score: 0,
@@ -1387,4 +1605,5 @@ renderDailyWords();
 resetDailyQuiz();
 updateBadges();
 updateMissionMeta();
+updateFoodMeta();
 updateCookingProgress();
