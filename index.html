@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Elsa's English Club</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <p class="eyebrow">Club d'anglais • spécial iPad • niveau 10 ans</p>
+      <h1>Elsa's English Club</h1>
+      <p class="subtitle">Joue, crée ton avatar, cuisine en anglais et progresse chaque jour.</p>
+      <div class="tab-row" role="tablist" aria-label="Modes de jeu">
+        <button class="tab-button active" data-tab-target="tab-profile" type="button" role="tab" aria-selected="true">👧 Profil</button>
+        <button class="tab-button" data-tab-target="tab-present" type="button" role="tab" aria-selected="false">🧠 Verbes au présent</button>
+        <button class="tab-button" data-tab-target="tab-food" type="button" role="tab" aria-selected="false">🍎 Leçon Food</button>
+        <button class="tab-button" data-tab-target="tab-maze" type="button" role="tab" aria-selected="false">🐴 Left & Right Maze</button>
+        <button class="tab-button" data-tab-target="tab-daily" type="button" role="tab" aria-selected="false">📚 3 mots du jour</button>
+        <button class="tab-button" data-tab-target="tab-cooking" type="button" role="tab" aria-selected="false">👩‍🍳 Cuisine</button>
+      </div>
+    </header>
+
+    <section id="tab-profile" class="tab-panel active">
+      <article class="card">
+        <h2>Profil enfant</h2>
+        <p>Prénom de ta championne :</p>
+        <div class="inline-wrap">
+          <input id="child-name-input" class="text-input" type="text" value="Elsa" maxlength="20" />
+          <button id="save-profile-button" class="next-button inline-button" type="button">Sauvegarder</button>
+        </div>
+        <p id="profile-greeting" class="subtitle small">Hello Elsa! Let's learn English.</p>
+        <p id="profile-save-status" class="feedback"></p>
+      </article>
+
+      <article class="card">
+        <h3>Avatar d'Elsa</h3>
+        <div class="avatar-layout">
+          <div class="avatar-preview" aria-label="Aperçu avatar">
+            <div id="avatar-character" class="avatar-character hair-wavy eyes-classic nose-small mouth-smile outfit-purple_shirt">
+              <div class="avatar-hair"></div>
+              <div class="avatar-face">
+                <div class="avatar-eyes">
+                  <span class="eye eye-left"></span>
+                  <span class="eye eye-right"></span>
+                </div>
+                <div class="avatar-nose"></div>
+                <div class="avatar-mouth"></div>
+                <div class="avatar-cheek cheek-left"></div>
+                <div class="avatar-cheek cheek-right"></div>
+              </div>
+              <div class="avatar-neck"></div>
+              <div class="avatar-outfit">
+                <div class="outfit-collar"></div>
+                <div class="outfit-pocket"></div>
+              </div>
+            </div>
+            <p id="avatar-style-label" class="avatar-label">Style: ondulés, yeux ronds, sourire</p>
+          </div>
+          <div class="avatar-customizer">
+            <div>
+              <p class="customize-title">Coupe de cheveux</p>
+              <div id="hair-options" class="chip-wrap"></div>
+            </div>
+            <div>
+              <p class="customize-title">Yeux</p>
+              <div id="eyes-options" class="chip-wrap"></div>
+            </div>
+            <div>
+              <p class="customize-title">Nez</p>
+              <div id="nose-options" class="chip-wrap"></div>
+            </div>
+            <div>
+              <p class="customize-title">Bouche</p>
+              <div id="mouth-options" class="chip-wrap"></div>
+            </div>
+            <div>
+              <p class="customize-title">Tenue</p>
+              <div id="outfit-options" class="chip-wrap"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="tab-present" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Aventure du présent</h2>
+        <p>Réponds bien pour gagner des étoiles.</p>
+        <div class="meta-row">
+          <div class="pill">⭐ <span id="score-value">0</span> points</div>
+          <div class="pill">🔥 série: <span id="streak-value">0</span></div>
+          <button id="speak-button" class="pill action-pill" type="button">🔊 Écouter</button>
+        </div>
+        <div class="progress-wrap" aria-label="Progression">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <p class="round-label" id="round-label">Mission 1</p>
+        <h3 id="question-title">Bienvenue !</h3>
+        <p id="question-text">Appuie sur "Commencer" pour jouer.</p>
+        <div id="option-grid" class="option-grid"></div>
+        <p id="feedback" class="feedback"></p>
+        <button id="next-button" class="next-button" type="button">Commencer</button>
+      </article>
+
+      <article class="card" aria-live="polite">
+        <h3>Sprint Do / Does</h3>
+        <p id="sprint-question">Appuie sur "Démarrer sprint".</p>
+        <div class="inline-wrap">
+          <button id="sprint-do" class="option-button compact" type="button">Do</button>
+          <button id="sprint-does" class="option-button compact" type="button">Does</button>
+        </div>
+        <p id="sprint-feedback" class="feedback"></p>
+        <button id="sprint-next" class="next-button" type="button">Démarrer sprint</button>
+      </article>
+
+      <article class="card" aria-live="polite">
+        <h3>Phrase Builder</h3>
+        <p id="builder-prompt">Appuie sur "Lancer builder".</p>
+        <div id="builder-options" class="option-grid"></div>
+        <p id="builder-feedback" class="feedback"></p>
+        <button id="builder-next" class="next-button" type="button">Lancer builder</button>
+      </article>
+
+      <article class="card" aria-live="polite">
+        <h3>⚙️ Mode génération automatique</h3>
+        <p class="subtitle small">Entre 3 à 12 verbes (un par ligne ou séparés par des virgules). Les 3 jeux se génèrent automatiquement.</p>
+        <textarea
+          id="verb-generator-input"
+          class="text-input textarea-input"
+          rows="4"
+          placeholder="like, play, read, write, watch, go, do, drink"
+          aria-label="Liste de verbes à générer"
+        ></textarea>
+        <div class="inline-wrap">
+          <button id="verb-generator-apply" class="next-button inline-button" type="button">Générer les jeux</button>
+          <button id="verb-generator-reset" class="option-button compact inline-button" type="button">Revenir aux jeux de base</button>
+        </div>
+        <p id="verb-generator-count" class="round-label">Programme actuel: base</p>
+        <p id="verb-generator-feedback" class="feedback"></p>
+      </article>
+
+      <article class="card badges-card">
+        <h3>Trophées</h3>
+        <div id="badges" class="badge-list">
+          <span class="badge empty">Pas encore de trophée</span>
+        </div>
+      </article>
+    </section>
+
+    <section id="tab-daily" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>3 mots du jour</h2>
+        <p class="subtitle small">Objectif: apprendre 3 nouveaux mots chaque jour + révisions intelligentes.</p>
+        <div class="inline-wrap">
+          <button class="series-button active" data-series="animals" type="button">🐾 Animaux</button>
+          <button class="series-button" data-series="clothes" type="button">👕 Habits</button>
+        </div>
+        <p id="daily-date" class="round-label"></p>
+        <div class="inline-wrap">
+          <span id="daily-new-counter" class="badge">Nouveaux: 0/3</span>
+          <span id="daily-review-counter" class="badge">Révisions: 0</span>
+        </div>
+        <div id="daily-words-grid" class="daily-grid"></div>
+        <div class="review-header">
+          <h3>Révisions du jour</h3>
+          <p id="daily-review-summary" class="subtitle small">Aucune révision due pour le moment.</p>
+        </div>
+        <div id="daily-review-grid" class="daily-grid"></div>
+        <p id="daily-progress" class="feedback ok"></p>
+      </article>
+
+      <article class="card" aria-live="polite">
+        <h3>Challenge mémoire</h3>
+        <p id="daily-quiz-prompt">Appuie sur "Démarrer challenge".</p>
+        <div id="daily-quiz-options" class="option-grid"></div>
+        <p id="daily-quiz-feedback" class="feedback"></p>
+        <button id="daily-quiz-next" class="next-button" type="button">Démarrer challenge</button>
+      </article>
+    </section>
+
+    <section id="tab-food" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Food Lesson Challenge</h2>
+        <p class="subtitle small">Révision de la leçon : aliments + questions "Do you like...?"</p>
+        <div class="meta-row">
+          <div class="pill">⭐ <span id="food-score-value">0</span> points</div>
+          <div class="pill">🔥 série: <span id="food-streak-value">0</span></div>
+          <button id="food-speak-button" class="pill action-pill" type="button">🔊 Lire</button>
+        </div>
+        <div class="progress-wrap">
+          <div id="food-progress-bar" class="progress-bar"></div>
+        </div>
+        <p id="food-round-label" class="round-label">Question 1</p>
+        <h3 id="food-title">Prête pour la révision ?</h3>
+        <p id="food-prompt">Appuie sur "Commencer la révision".</p>
+        <div id="food-options" class="option-grid"></div>
+        <p id="food-feedback" class="feedback"></p>
+        <button id="food-next-button" class="next-button" type="button">Commencer la révision</button>
+      </article>
+    </section>
+
+    <section id="tab-maze" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Horse Maze - Left & Right</h2>
+        <p class="subtitle small">Aide le cheval à trouver la carotte en suivant les commandes en anglais.</p>
+        <div class="meta-row">
+          <div class="pill">🗺️ niveau: <span id="maze-level-value">1</span></div>
+          <div class="pill">👣 moves: <span id="maze-moves-value">0</span></div>
+          <button id="maze-speak-button" class="pill action-pill" type="button">🔊 Lire la commande</button>
+        </div>
+        <p id="maze-facing" class="round-label">Facing: East ➡️</p>
+        <p id="maze-command" class="subtitle small">Command: Go straight on.</p>
+        <div id="maze-grid" class="maze-grid" aria-label="Labyrinthe du cheval"></div>
+        <div class="inline-wrap">
+          <button id="maze-left-button" class="option-button compact" type="button">↩️ Turn left</button>
+          <button id="maze-straight-button" class="option-button compact" type="button">⬆️ Go straight on</button>
+          <button id="maze-right-button" class="option-button compact" type="button">↪️ Turn right</button>
+        </div>
+        <p id="maze-feedback" class="feedback"></p>
+        <div class="inline-wrap">
+          <button id="maze-reset-button" class="next-button inline-button" type="button">Recommencer niveau</button>
+          <button id="maze-next-level-button" class="next-button inline-button" type="button" disabled>Niveau suivant</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="tab-cooking" class="tab-panel">
+      <article class="card" aria-live="polite">
+        <h2>Chef Elsa - Cooking English Quest</h2>
+        <p class="subtitle small">Apprends les verbes du présent en cuisinant.</p>
+        <div class="inline-wrap">
+          <button class="recipe-button active" data-recipe="pancakes" type="button">🥞 Pancakes</button>
+          <button class="recipe-button" data-recipe="fruit_salad" type="button">🍓 Fruit Salad</button>
+        </div>
+        <div class="progress-wrap">
+          <div id="cooking-progress" class="progress-bar"></div>
+        </div>
+        <p id="cooking-step-label" class="round-label">Étape 1</p>
+        <p id="cooking-prompt">Appuie sur "Commencer la recette".</p>
+        <div id="cooking-options" class="option-grid"></div>
+        <p id="cooking-feedback" class="feedback"></p>
+        <button id="cooking-next" class="next-button" type="button">Commencer la recette</button>
+      </article>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
